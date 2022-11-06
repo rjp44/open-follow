@@ -35,10 +35,11 @@ function callback(req, res) {
       // {loggedClient} is an authenticated client in behalf of some user
       // Store {accessToken} somewhere, it will be valid until {expiresIn} is hit.
       // If you want to refresh your token later, store {refreshToken} (it is present if 'offline.access' has been given as scope)
+      Object.assign(req.session, { refreshToken, accessToken });
 
       // Example request
       const { data: userObject } = await loggedClient.v2.me();
-      res.send(`<PRE>${JSON_stringify(userObject, null, "  ")}`);
+      res.json(userObject);
     })
     .catch(() => res.status(403).send('Invalid verifier or access tokens!'));
 };
