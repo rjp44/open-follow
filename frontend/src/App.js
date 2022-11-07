@@ -11,64 +11,84 @@ const api = axios.create({
 axios.defaults.withCredentials = true;
 
 function App() {
+  const lists = { 'followers': useState([]), 'following': useState([]), 'blocked': useState([]), 'muted': useState([]) };
   const [tUrl, setUrl] = useState('');
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
-  const [blocked, setBlocked] = useState([]);
-  const [muted, setMuted] = useState([]);
   const urlFetchedRef = useRef(0);
   console.log('app entered', { date: new Date() });
 
-  async function init() {
+  async function twitterData() {
+
     if (urlFetchedRef.current++ === 0) {
-      let { data: { url } } = await api.get('/twitter/authUrl')
-          console.log({ url });
+      const decoder = new TextDecoder("utf-8");
+
+      let { data: { url } } = await api.get('/twitter/authUrl');
+      console.log({ url });
       setUrl(url);
-      let { data: followers } = await api.get('/twitter/followers');
-      console.log({ followers });
-      setFollowers(followers.entries);
-      let { data: following } = await api.get('/twitter/following');
-      setFollowing(following.entries);
-      console.log({ following });
-      let { data: blocked } = await api.get('/twitter/blocked');
-      console.log({ blocked });
-      setBlocked(blocked.entries);
-      let { data: muted } = await api.get('/twitter/muted');
-      console.log({ muted });
-      setMuted(muted.entries);
+      for (const [name, [thing, setter]] of Object.entries(lists)) {
+        let response = await fetch(`${process.env.REACT_APP_BACKEND_HOST}/twitter/${name}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        // response.body is a ReadableStream
+        const reader = response.body.getReader();
+        let str = '';
+        let list = [];
+        for await (const chunk of readChunks(reader)) {
+          str += decoder.decode(chunk);
+          console.log(`received chunk of size ${chunk.length}`, { chunk, str });
+          try {
+            let obj = JSON.parse(str);
+            if (obj.data && obj.meta) {
+              list = list.concat(obj.data);
+              setter(list);
+              str = '';
+              console.log(`added ${obj.meta.result_count} entries`, thing);
+            }
+          }
+          catch (err) {
+            console.log(err, 'accumulating chinks');
+          }
+
+
+        }
+      }
+
+
+
+
+      // readChunks() reads from the provided reader and yields the results into an async iterable
+      function readChunks(reader) {
+        return {
+          async*[Symbol.asyncIterator]() {
+            let readResult = await reader.read();
+            while (!readResult.done) {
+              yield readResult.value;
+              readResult = await reader.read();
+            }
+          },
+        };
+
+      }
+
     }
   }
-  init();
+  twitterData();
 
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} height={50} width={50} className="App-logo" alt="logo" />
         <a href={tUrl} target="_blank" rel="noreferrer"><button>Open IFRAME</button></a>
-        <h2>Followers</h2>
-        <ul>
-          {followers.map(follower => (
-            (<li>{follower.name} <b>@{follower.username}</b></li>)
-          ))}
-        </ul>
-        <h2>Following</h2>
-        <ul>
-          {following.map(user => (
-            (<li>{user.name} <b>@{user.username}</b></li>)
-          ))}
-        </ul>
-        <h2>Blocked</h2>
-        <ul>
-          {blocked.map(user => (
-            (<li>{user.name} <b>@{user.username}</b></li>)
-          ))}
-        </ul>
-        <h2>Muted</h2>
-        <ul>
-          {muted.map(user => (
-            (<li>{user.name} <b>@{user.username}</b></li>)
-          ))}
-        </ul>
+        {Object.entries(lists).map(([name, [list, setter]]) =>
+        (list.length > 0 && <>
+          <h2>{name}</h2>
+          <ul>
+            {list.map(contact => (
+              (<li>{contact.name} <b>@{contact.username}</b></li>)
+            ))}
+          </ul>
+        </>)
+        )}
       </header>
     </div>
   );

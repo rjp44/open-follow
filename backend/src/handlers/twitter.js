@@ -124,15 +124,12 @@ async function lists(req, res) {
     }
 
     
-    items = listOperation(id, { max_results: 1000 }, {max_results:1000});
-    res.write('{ "entries": [');
+    items = listOperation(id, { max_results: 1000 }, { max_results: 1000 });
+    res.type('txt');
     for await (const page of items) {
       console.log({ page });
-      res.write(page.data.reduce((o, item, index) => (o + (o.length ? ',' : '') + JSON.stringify(item)), ''));
-      if (page.meta.next_token)
-        res.write(',');
+      res.write(JSON.stringify(page));
     }
-    res.write('], "truncated": false}');
     res.end();
   }
   catch (err) {
