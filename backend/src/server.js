@@ -7,20 +7,31 @@ const twitter = require("./handlers/twitter");
 
 const server = express();
 
+server.set('trust proxy', 1);
 server.use(session({
   secret: 'veedEX2zkPNyMs9YeBgO',
-  resave: false,
+  resave: true,
   saveUninitialized: true,
-  cookie: { secure: (app.get('env') === 'production') }
+  cookie: {
+    secure: true,
+    sameSite: 'none',
+    httpOnly: false,
+  }
 }));
 server.use(express.json());
 server.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
 );
-server.use(cors());
+server.use(cors({
+  origin: ['http://localhost:3000', 'https://twitter.com', 'https://openfollow.openshare.me'],
+  allowedHeaders: ['cookie'],
+  credentials: true,
+
+}));
 server.get("/", (req, res) => res.json({ message: "Hello world" }));
 server.get("/twitter/authUrl", twitter.authUrl);
 server.get("/twitter/callback", twitter.callback);
+server.get("/twitter/:list(followers|following|blocked|muted)", twitter.lists);
 
 server.use((req, res, next) => {
   const error = new Error(`Path '${req.url}' does not exist`);
