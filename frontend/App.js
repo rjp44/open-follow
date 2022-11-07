@@ -1,13 +1,3 @@
-import { useState, useEffect, useRef } from 'react';
-import logo from './logo.svg';
-import axios from 'axios';
-import './App.css';
-import './App.css';
-
-import MainMenu, { paths as MenuPaths } from './components/MainMenu';
-
-import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Typography } from '@material-ui/core';
 import {
   HashRouter as Router,
   Route,
@@ -17,6 +7,10 @@ import {
 
 import './App.css';
 
+import MainMenu, { paths as MenuPaths } from './components/MainMenu';
+
+import { makeStyles } from '@material-ui/core/styles';
+import { AppBar, Toolbar, Typography } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -42,21 +36,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-
-const api = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_HOST}/`,
-  withCredentials: true
-});
-
-axios.defaults.withCredentials = true;
-
-
-
-
 function App() {
   const classes = useStyles();
-
- 
 
   return (
     <div className={classes.root}>
@@ -90,10 +71,5 @@ function App() {
 
   }
 }
-
-
-
-
-
 
 export default App;
