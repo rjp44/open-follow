@@ -6,19 +6,21 @@ import './App.css';
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
-import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Typography } from '@material-ui/core';
+import { makeStyles } from '@mui/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { AppBar, Toolbar, Typography } from '@mui/material';
 import {
   HashRouter as Router,
   Route,
+  Routes,
   useLocation
 } from "react-router-dom";
 
 
 import './App.css';
 
-
-const useStyles = makeStyles((theme) => ({
+const theme = createTheme({});
+const useStyles = makeStyles(() => ({
   root: {
     height: '100%',
     display: 'flex',
@@ -59,6 +61,8 @@ function App() {
  
 
   return (
+    <ThemeProvider theme={theme}>
+
     <div className={classes.root}>
       <Router>
         <>
@@ -69,17 +73,21 @@ function App() {
             </Toolbar>
           </AppBar>
           <div className={classes.toolbar} />
+          <Routes>
           {Object.entries(MenuPaths).map(([key, value]) =>
             <Route exact={value.exact}
               path={key}
               key={key}
-              component={value.component}
+              element={value.element}
               children={value.children}
             />
-          )}
+            )}
+          </Routes>
         </>
-      </Router>
-    </div>
+        </Router>
+      </div>
+    </ThemeProvider>
+
   );
 
   function LocationHeader() {

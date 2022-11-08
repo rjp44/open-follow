@@ -1,15 +1,15 @@
 import React from 'react';
 
-import { IconButton, MenuItem, Menu} from '@material-ui/core';
-import MenuIcon from '@material-ui/icons/Menu';
+import { IconButton, MenuItem, Menu} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { Link as RouterLink } from 'react-router-dom';
 
 import OpenFollow from './OpenFollow';
 import About from './About';
 
 export let paths = {
-  '/': { title: 'Location', exact: true, children: (props) => <OpenFollow {...props} /> },
-  '/about': { title: 'About', component: About }
+  '/': { title: 'Open Follow', exact: true, element: <OpenFollow />},
+  '/about': { title: 'About', element: <About /> }
 }
 
 

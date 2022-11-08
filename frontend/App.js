@@ -9,8 +9,8 @@ import './App.css';
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
-import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Typography } from '@material-ui/core';
+import { makeStyles } from '@mui/material/styles';
+import { AppBar, Toolbar, Typography } from '@mui/material';
 
 const useStyles = makeStyles((theme) => ({
   root: {

@@ -1,16 +1,16 @@
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Dialog from '@material-ui/core/Dialog';
-import Paper from '@material-ui/core/Paper';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import CloseIcon from '@material-ui/icons/Close';
-import GitHubIcon from '@material-ui/icons/GitHub';
-import Slide from '@material-ui/core/Slide';
-import Link from '@material-ui/core/Link';
+import { makeStyles } from '@mui/styles';
+import Dialog from '@mui/material/Dialog';
+import Paper from '@mui/material/Paper';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import Slide from '@mui/material/Slide';
+import Link from '@mui/material/Link';
 
 const useStyles = makeStyles((theme) => ({
   paper: {

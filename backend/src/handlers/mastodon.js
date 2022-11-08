@@ -1,37 +1,8 @@
-const { Client, auth } = require('twitter-api-sdk');
 const config = process.env;
 const uuid = require('uuid');
-const OAUTH_CONFIG = { client_id: config.TWITTER_CLIENT_KEY, client_secret: config.TWITTER_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
+const OAUTH_CONFIG = { client_id: config.MASTODON_CLIENT_KEY, client_secret: config.MASTODON_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
 
 console.log({ env: process.env, config });
-
-
-
-function authUrl(req, res, next) {
-  try {
-    if (req.session.twitter && req.session.twitter.state === 'initial' && req.session.twitter.url && req.session.twitter.url.includes(req.session.twitter.codeVerifier)) {
-      let url = req.session.twitter.url;
-      res.json({ url });
-      return;
-    }
-
-
-    let authClient = new auth.OAuth2User(OAUTH_CONFIG);
-    let client = new Client(authClient);
-    let [codeVerifier, state] = [uuid.v4(), 'initial'];
-    let url = authClient.generateAuthURL({
-      state: 'initial',
-      code_challenge_method: "plain",
-      code_challenge: codeVerifier
-    });
-
-    req.session.twitter = { codeVerifier, state: 'initial', url };
-    res.json({ url });
-  }
-  catch (err) {
-    res.status(500).json(err);
-  };
-}
 
 
 waiting = {};
@@ -42,7 +13,7 @@ async function callback(req, res) {
   const client = new Client(authClient);
 
   const { state, code } = req.query;
-  const { state: sessionState, codeVerifier } = req.session.twitter || {};
+  const { state: sessionState, codeVerifier } = req.session.mastodon || {};
 
   if (!state || !sessionState || !code) {
     return res.status(400).send('You denied the app or your session expired!');
@@ -61,18 +32,18 @@ async function callback(req, res) {
   authClient.requestAccessToken(code)
     .then(async ({ token }) => {
 
-      req.session.twitter.token = token;
-      req.session.twitter.state = 'online';
+      req.session.mastodon.token = token;
+      req.session.mastodon.state = 'online';
 
       // Example request
       const myUser = await client.users.findMyUser();
-      req.session.twitter = {
-        ...req.session.twitter,
+      req.session.mastodon = {
+        ...req.session.mastodon,
         token,
         state: 'online',
         id: myUser.data.id
       };
-      waiting[codeVerifier] && waiting[codeVerifier].forEach(resolver => resolver(req.session.twitter));
+      waiting[codeVerifier] && waiting[codeVerifier].forEach(resolver => resolver(req.session.mastodon));
       waiting[codeVerifier] = undefined;
       res.send('<script>window.close();</script>');
       //res.json(followers.data);
@@ -90,7 +61,7 @@ async function lists(req, res) {
 
   try {
 
-    let { state, codeVerifier, token, id } = req.session.twitter;
+    let { state, codeVerifier, token, id } = req.session.mastodon;
     const { list } = req.params;
 
     console.log(req.session);  
@@ -104,7 +75,7 @@ async function lists(req, res) {
       }));
 
     console.log('have auth', { state, codeVerifier, token, id });
-    req.session.twitter = { state, codeVerifier, token, id };
+    req.session.mastodon = { state, codeVerifier, token, id };
 
 
     const authClient = new auth.OAuth2Bearer(token.access_token );

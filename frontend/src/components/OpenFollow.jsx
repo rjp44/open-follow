@@ -1,20 +1,22 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import Box from '@material-ui/core/Box';
+import Box from '@mui/material/Box';
 
-import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Grid from '@material-ui/core/Grid';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
+import LoadingButton from '@mui/lab/LoadingButton';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
+import Grid from '@mui/material/Grid';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
 
-import Typography from '@material-ui/core/Typography';
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
-import { makeStyles } from '@material-ui/core/styles';
-import { Paper } from '@material-ui/core';
+import Typography from '@mui/material/Typography';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/lab/Alert';
+import { makeStyles } from '@mui/styles';
+import { Paper } from '@mui/material';
+
+import Twitter from '../lib/twitter';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -92,117 +94,72 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-const api = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_HOST}/`,
-  withCredentials: true
-});
-
-axios.defaults.withCredentials = true;
-
 
 export default function OpenFollow(props) {
   const classes = useStyles();
 
   const lists = { 'followers': useState([]), 'following': useState([]), 'blocked': useState([]), 'muted': useState([]) };
   const [tUrl, setUrl] = useState('');
+  const [twitterState, setTwitterState] = useState('logged_out');
   const urlFetchedRef = useRef(0);
-  console.log('app entered', { date: new Date() });
+  const twitter = new Twitter();
 
-  async function twitterData() {
+  useEffect(() => {
+    ((tUrl === '') && twitter.getUrl().then(url => setUrl(url)));
+  });
 
-    if (urlFetchedRef.current++ === 0) {
-      const decoder = new TextDecoder("utf-8");
-
-      let { data: { url } } = await api.get('/twitter/authUrl');
-      console.log({ url });
-      setUrl(url);
+  useEffect(() => {
+    (async () => {
       for (const [name, [thing, setter]] of Object.entries(lists)) {
-        let response = await fetch(`${process.env.REACT_APP_BACKEND_HOST}/twitter/${name}`, {
-          method: 'GET',
-          credentials: 'include'
-        });
-        // response.body is a ReadableStream
-        const reader = response.body.getReader();
-        let str = '';
+        if (thing.length)
+          break;
         let list = [];
-        for await (const chunk of readChunks(reader)) {
-          str += decoder.decode(chunk);
-          console.log(`received chunk of size ${chunk.length}`, { chunk, str });
-          try {
-            let obj = JSON.parse(str);
-            if (obj.data && obj.meta) {
-              list = list.concat(obj.data);
-              setter(list);
-              str = '';
-              console.log(`added ${obj.meta.result_count} entries`, thing);
-            }
-          }
-          catch (err) {
-            console.log(err, 'accumulating chinks');
-          }
-
-
+        for await (const data of twitter.getList(name)) {
+          list = list.concat(data);
+          setter(list);
         }
       }
-
-      // readChunks() reads from the provided reader and yields the results into an async iterable
-      function readChunks(reader) {
-        return {
-          async*[Symbol.asyncIterator]() {
-            let readResult = await reader.read();
-            while (!readResult.done) {
-              yield readResult.value;
-              readResult = await reader.read();
-            }
-          },
-        };
-
-      }
-
-    }
-  }
-  twitterData();
+    })();
+    return;
+  }, [tUrl]);
 
   const [name, [list, setter]] = Object.entries(lists)[0];
 
   return (
     <Grid container className={classes.root}>
       <Grid item xs={12} className={classes.row} data-testid="follows">
-        <a href={tUrl} target="_blank" rel="noreferrer"><Button>Open IFRAME</Button></a>
+        {(twitterState === 'logged_out' || twitterState === 'authenticating') && <LoadingButton variant="contained" href={tUrl} target="_blank"
+          onClick={() => setTwitterState('authenticating')}
+          loading={twitterState === 'authenticating'}
+
+        >Login to Twitter</LoadingButton>}
         <Box
           sx={{ width: '100%', height: 400, maxWidth: 360, bgcolor: 'background.paper' }}
         >
-          <List dense sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
-            {list.map(contact => (
-            <ListItem
-              key={contact.username}
-              primaryAction={
-                <Checkbox
-                  edge="end"
-                  //onChange={handleToggle(value)}
-                  //checked={checked.indexOf(value) !== -1}
-                  //inputProps={{ 'aria-labelledby': labelId }}
-                />
-              }
-              disablePadding
-            >
-              <ListItemText id={contact.username} primary={`${contact.name} - ${contact.username}`} />
-          </ListItem>
-                      ))}
-          </List>
+          {list.length > 0 && <>
+            <List dense sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
+              {list.map(contact => (
+                <ListItem
+                  key={contact.username}
+                  secondaryAction={
+                    <Checkbox
+                      edge="end"
+                    //onChange={handleToggle(value)}
+                    //checked={checked.indexOf(value) !== -1}
+                    //inputProps={{ 'aria-labelledby': labelId }}
+                    />
+                  }
+                >
+                  <ListItemText id={contact.username} primary={`${contact.name}  @${contact.username}`} />
+                </ListItem>
+              ))}
+            </List>
+          </>
+          }
         </Box>
-        {Object.entries(lists).map(([name, [list, setter]]) =>
-        (list.length > 0 && <>
-          <div className={classes.gridRef} data-testid="osgr"><Typography variant="h5">{name}</Typography></div><h2>{name}</h2>
-          <ul>
-            {list.map(contact => (
-              (<li>{contact.name} <b>@{contact.username}</b></li>)
-            ))}
-          </ul>
-        </>)
-        )}
+
       </Grid>
-           
+
     </Grid>
   );
 };
