@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { makeStyles } from '@mui/material/styles';
 import LeafletMap from './LeafletMap';
-import GeoInput from './GeoInput';
+import GeoInput from './MastodonLogin';
 
 const useStyles = makeStyles((theme) => ({
   root: {

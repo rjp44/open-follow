@@ -16,6 +16,8 @@ import MuiAlert from '@mui/lab/Alert';
 import { makeStyles } from '@mui/styles';
 import { Paper } from '@mui/material';
 
+import MastodonLogin from './MastodonLogin';
+
 import Twitter from '../lib/twitter';
 
 
@@ -99,13 +101,14 @@ export default function OpenFollow(props) {
   const classes = useStyles();
 
   const lists = { 'followers': useState([]), 'following': useState([]), 'blocked': useState([]), 'muted': useState([]) };
-  const [tUrl, setUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
+
   const [twitterState, setTwitterState] = useState('logged_out');
   const urlFetchedRef = useRef(0);
   const twitter = new Twitter();
 
   useEffect(() => {
-    ((tUrl === '') && twitter.getUrl().then(url => setUrl(url)));
+    ((twitterUrl === '') && twitter.getUrl().then(url => setTwitterUrl(url)));
   });
 
   useEffect(() => {
@@ -121,18 +124,19 @@ export default function OpenFollow(props) {
       }
     })();
     return;
-  }, [tUrl]);
+  }, [twitterUrl]);
 
   const [name, [list, setter]] = Object.entries(lists)[0];
 
   return (
     <Grid container className={classes.root}>
       <Grid item xs={12} className={classes.row} data-testid="follows">
-        {(twitterState === 'logged_out' || twitterState === 'authenticating') && <LoadingButton variant="contained" href={tUrl} target="_blank"
+        {(twitterState === 'logged_out' || twitterState === 'authenticating') && <LoadingButton variant="contained" href={twitterUrl} target="_blank"
           onClick={() => setTwitterState('authenticating')}
           loading={twitterState === 'authenticating'}
 
         >Login to Twitter</LoadingButton>}
+        <MastodonLogin />
         <Box
           sx={{ width: '100%', height: 400, maxWidth: 360, bgcolor: 'background.paper' }}
         >

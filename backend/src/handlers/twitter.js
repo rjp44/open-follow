@@ -3,9 +3,6 @@ const config = process.env;
 const uuid = require('uuid');
 const OAUTH_CONFIG = { client_id: config.TWITTER_CLIENT_KEY, client_secret: config.TWITTER_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
 
-console.log({ env: process.env, config });
-
-
 
 function authUrl(req, res, next) {
   try {
@@ -78,7 +75,7 @@ async function callback(req, res) {
       //res.json(followers.data);
     })
     .catch((error) => {
-      console.log(error);
+      
       res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
     });
 };
@@ -90,20 +87,25 @@ async function lists(req, res) {
 
   try {
 
-    let { state, codeVerifier, token, id } = req.session.twitter;
+  
+
+    let { state, codeVerifier, token, id } = req.session.twitter || {};
     const { list } = req.params;
 
-    console.log(req.session);  
+    
+
     if (state === 'initial')
       ({ state, codeVerifier, token, id } = await new Promise((resolve, reject) => {
         waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
-        console.log('pushed', waiting);
+        
         setTimeout(() => {
           resolve("foo");
         }, 30000);
       }));
+    
+    if (!(state && codeVerifier && token && id))
+      throw 'no state';
 
-    console.log('have auth', { state, codeVerifier, token, id });
     req.session.twitter = { state, codeVerifier, token, id };
 
 
@@ -117,7 +119,6 @@ async function lists(req, res) {
     };
     let listOperation = listMap[list];
 
-    console.log({ list });
     if (!listOperation) {
       res.status(400).send(`no handler for ${list}`);
       return;
@@ -127,13 +128,11 @@ async function lists(req, res) {
     items = listOperation(id, { max_results: 1000 }, { max_results: 1000 });
     res.type('txt');
     for await (const page of items) {
-      console.log({ page });
       res.write(JSON.stringify(page));
     }
     res.end();
   }
   catch (err) {
-    console.log('lists', err);
     if (err.status == 429) {
       res.write('], truncated: true}');
       res.end();

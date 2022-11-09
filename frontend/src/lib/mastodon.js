@@ -11,25 +11,32 @@ axios.defaults.withCredentials = true;
  * Class which encapsulates Mastodon API
  * Limited functionality for now as this application is just interested in OAuth2 flow and getting certain lists
  */
-export default class Twitter {
+export default class Mastodon {
 
-/**
- * 
- * @param [function] callback 
- * @returns {string} Twitter OAUTH2 URL
- */
-  async getUrl(callback = null) {
-    let { data: { url } } = await api.get('/twitter/authUrl');
+  async getServers() {
+    return (await api.get('mastodon/servers')).data;
+    
+  }
+  /**
+   * 
+   * @param [function] callback 
+   * @returns {string} Twitter OAUTH2 URL
+   */
+  async getUrl(host, callback = null) {
+    if (!host)
+      return '';
+    this.host = host;
+    let { data: { url } } = await api.get(`/mastodon/authUrl?server=${host}`);
     console.log({ url });
     callback && callback(url);
     return url;
   }
 
-/**
- * Generator which yields list fragments. Streams data from API and yields each complete list fragment
- * @param {string} name List name
- */
-  async* getList(name) {
+  /**
+   * Generator which yields list fragments. Streams data from API and yields each complete list fragment
+   * @param {string} name List name
+   */
+  async * getList(name) {
 
     const decoder = new TextDecoder("utf-8");
 
@@ -76,6 +83,16 @@ export default class Twitter {
 
     }
 
+  }
+
+  async getUserInfo() {
+    let { token_type, access_token } = await api.get('/mastodon/token');
+    this.mastodon = axios.create({
+      baseURL: `${process.env.REACT_APP_BACKEND_HOST}/mastodon/passthru/api/v1`,
+    });
+    return (await this.mastodon.get('accounts/verify_credentials')).data;
+ 
+  
   }
 
 };

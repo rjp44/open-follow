@@ -1,124 +1,187 @@
-const config = process.env;
+const config = require('config');
+const axios = require('axios');
 const uuid = require('uuid');
-const OAUTH_CONFIG = { client_id: config.MASTODON_CLIENT_KEY, client_secret: config.MASTODON_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
+const BlobStorage = require('../lib/blobstorage');
+
+const OAUTH_CONFIG = { client_id: config.MASTODON_CLIENT_KEY, client_secret: config.MASTODON_CLIENT_SECRET, callback: config.REDIRECT_URI, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
 
 console.log({ env: process.env, config });
 
+const storage = new BlobStorage();
 
-waiting = {};
+let waiting = {};
+
+let serverList = [];
+
+async function authUrl(req, res) {
+  let { server } = req.query;
+  let blob = await storage.fetch(server);
+  let credentials = undefined;
+  const client_name = config.get("mastodon.client_name");
+  const redirect_uri = encodeURIComponent(config.get("mastodon.redirect_uri"));
+  const scopes = encodeURIComponent("read follow");
+  let url;
+
+  if (req.session.mastodon && req.session.mastodon.state === 'initial' && req.session.mastodon.url && req.session.mastodon.host) {
+    url = req.session.mastodon.url;
+    res.json({ url });
+    return;
+  }
+
+  if (blob) {
+    try {
+      credentials = JSON.parse(blob);
+      console.log('using old credentials', { credentials });
+    }
+    catch (err) {
+      credentials = undefined;
+    }
+  }
+  if (!credentials) {
+    try {
+      let request = `https://${server}/api/v1/apps?client_name=${client_name}&redirect_uris=${redirect_uri}&scopes=${scopes}`;
+      console.log('getting credentials', { request });
+      let data = await axios.post(request);
+      let credentials = data.data;
+      console.log('got new credentials', { data, credentials });
+      await storage.save(server, JSON.stringify(credentials));
+    }
+    catch (err) {
+      console.log(err);
+      res.status(400).send('Server doesnt support credentials');
+      return;
+    }
+  }
+
+  url = `https://${server}//oauth/authorize?response_type=code&scope=${scopes}&client_id=${encodeURIComponent(credentials.client_id)}&redirect_uri=${redirect_uri}`;
+
+  req.session.mastodon = {
+    uid: uuid.v4(),
+    client_id: credentials.client_id,
+    client_secret: credentials.client_secret,
+    state: 'initial',
+    url,
+    host: server
+  };
+  res.json({ url });
+}
+
+
+async function servers(req, res) {
+
+  const secret = config.get('mastodon.lists_key');
+
+  if (!serverList.length) {
+    let blob = await storage.fetch('serverList');
+    blob && (serverList = JSON.parse(blob));
+    setTimeout(() => (storage.remove('serverList')), 86400 * 1000);
+  }
+  if (!serverList.length) {
+    try {
+      let instances = await axios.get('https://instances.social/api/1.0/instances/list?count=0&sort_by=active_users&sort_order=desc',
+        {
+          headers: { "Authorization": `Bearer ${secret}` }
+        }
+      );
+
+      serverList = instances.data.instances.map(instance => instance.name);
+      console.log('Saving', 'serverList', JSON.stringify(serverList));
+      await storage.save('serverList', JSON.stringify(serverList));
+      setTimeout(() => (serverList = []), 86400 * 1000);
+    }
+    catch (err) {
+      console.log('server list', err);
+      res.status(500).json(err);
+      return;
+    }
+  }
+  console.log({ serverList });
+  res.json(serverList);
+
+}
+
+
 
 async function callback(req, res) {
+  const redirect_uri = config.get("mastodon.redirect_uri");
+  const scopes = "read follow";
 
-  const authClient = new auth.OAuth2User(OAUTH_CONFIG);
-  const client = new Client(authClient);
+  const { state, url, host, client_id, client_secret, uid } = req.session.mastodon || {};
 
-  const { state, code } = req.query;
-  const { state: sessionState, codeVerifier } = req.session.mastodon || {};
+  const { code } = req.query;
 
-  if (!state || !sessionState || !code) {
+  if (!code) {
     return res.status(400).send('You denied the app or your session expired!');
   }
-  if (state !== sessionState) {
-    return res.status(400).send('Stored tokens didnt match!');
+
+  if (!state || !state === 'initial' || !host) {
+    return res.status(400).send('Bad session cookie!');
   }
-  // This is crap, it turns out that the only method that can set the private code_challenge property
-  // is generateAuthURL, so we call it here to make things work. 
-  authClient.generateAuthURL({
-    state,
-    code_challenge_method: "plain",
-    code_challenge: codeVerifier
-  });
-
-  authClient.requestAccessToken(code)
-    .then(async ({ token }) => {
-
-      req.session.mastodon.token = token;
-      req.session.mastodon.state = 'online';
-
-      // Example request
-      const myUser = await client.users.findMyUser();
-      req.session.mastodon = {
-        ...req.session.mastodon,
-        token,
-        state: 'online',
-        id: myUser.data.id
-      };
-      waiting[codeVerifier] && waiting[codeVerifier].forEach(resolver => resolver(req.session.mastodon));
-      waiting[codeVerifier] = undefined;
-      res.send('<script>window.close();</script>');
-      //res.json(followers.data);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
-    });
-};
-
-
-async function lists(req, res) {
-
-  let items;
 
   try {
 
-    let { state, codeVerifier, token, id } = req.session.mastodon;
-    const { list } = req.params;
+    let { data: token } = await axios.post(`https://${host}/oauth/token`, {
+      code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope:scopes });
 
-    console.log(req.session);  
-    if (state === 'initial')
-      ({ state, codeVerifier, token, id } = await new Promise((resolve, reject) => {
-        waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
-        console.log('pushed', waiting);
-        setTimeout(() => {
-          resolve("foo");
-        }, 30000);
-      }));
-
-    console.log('have auth', { state, codeVerifier, token, id });
-    req.session.mastodon = { state, codeVerifier, token, id };
-
-
-    const authClient = new auth.OAuth2Bearer(token.access_token );
-    const client = new Client(authClient);
-    const listMap = {
-      followers: client.users.usersIdFollowers,
-      following: client.users.usersIdFollowing,
-      blocked: client.users.usersIdBlocking,
-      muted: client.users.usersIdMuting,
-    };
-    let listOperation = listMap[list];
-
-    console.log({ list });
-    if (!listOperation) {
-      res.status(400).send(`no handler for ${list}`);
-      return;
-    }
-
+    console.log('got token', { token })
     
-    items = listOperation(id, { max_results: 1000 }, { max_results: 1000 });
-    res.type('txt');
-    for await (const page of items) {
-      console.log({ page });
-      res.write(JSON.stringify(page));
-    }
-    res.end();
-  }
-  catch (err) {
-    console.log('lists', err);
-    if (err.status == 429) {
-      res.write('], truncated: true}');
-      res.end();
-    }
-    else {
-      return res.status(400).json(err);
-    }
+    req.session.mastodon.token = token;
+    waiting[uid] && waiting[uid].forEach(resolver => resolver(req.session.mastodon));
+    waiting[uid] = undefined;
+    res.send('<script>window.close();</script>');
+    //res.json(followers.data);
   }
 
-};
+  catch (error) {
+    console.log(error);
+    res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
+  };
+}
+
+async function token(req, res) {
+  let { state, token, uid } = req.session.mastodon || {};
+  
+  if (uid && !token) {
+    (req.session.mastodon = await new Promise((resolve, reject) => {
+      waiting[uid] = [...(waiting[uid] || []), resolve];
+
+      setTimeout(() => {
+        resolve("foo");
+      }, 30000);
+    }));
+  }
+  ({ token } = req.session.mastodon);
+  if (token)
+    res.json(token);
+  else
+    res.status(400).send('not authenticated');
+}
+
+async function passthru(req, res) {
+  let { state, token, uid, host, body } = req.session.mastodon || {};
+  let { baseUrl, originalUrl, method, protocol } = req;
+  let url = originalUrl.slice(baseUrl.length);
+  console.log('PASSTHRU', { baseUrl, originalUrl, method, protocol, url, body });
+  if (!token) {
+    res.status(403).send('not authenticated');
+    return;
+  }
+  let result = await axios({
+    method, url: `${protocol}://${host}${url}`, body, 
+      headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+  });
+  res.status(result.status).json(result.data);
+}
+
+
+
 
 
 module.exports = {
   authUrl,
+  servers,
   callback,
-  lists,
+  token,
+  passthru,
+
 };
