@@ -21,8 +21,12 @@ async function authUrl(req, res) {
   const redirect_uri = encodeURIComponent(config.get("mastodon.redirect_uri"));
   const scopes = encodeURIComponent("read follow");
   let url;
-
-  if (req.session.mastodon && req.session.mastodon.state === 'initial' && req.session.mastodon.url && req.session.mastodon.host) {
+  console.log('authUrl called with...', req.session.mastodon);
+  if (!server || !server.length) {
+    res.status(400).send('No server');
+    return;
+  }
+  if (req.session.mastodon && req.session.mastodon.url && req.session.mastodon?.host === server) {
     url = req.session.mastodon.url;
     res.json({ url });
     return;
@@ -54,16 +58,20 @@ async function authUrl(req, res) {
   }
 
   url = `https://${server}//oauth/authorize?response_type=code&scope=${scopes}&client_id=${encodeURIComponent(credentials.client_id)}&redirect_uri=${redirect_uri}`;
+  
+  req.session.regenerate(() => {
+    req.session.mastodon = {
+      uid: uuid.v4(),
+      client_id: credentials.client_id,
+      client_secret: credentials.client_secret,
+      state: 'initial',
+      url,
+      host: server
+    };
+    res.json({ url });
+  });
 
-  req.session.mastodon = {
-    uid: uuid.v4(),
-    client_id: credentials.client_id,
-    client_secret: credentials.client_secret,
-    state: 'initial',
-    url,
-    host: server
-  };
-  res.json({ url });
+  
 }
 
 
@@ -125,7 +133,9 @@ async function callback(req, res) {
 
     console.log('got token', { token })
     
-    req.session.mastodon.token = token;
+    req.session.mastodon = {
+      ...req.session.mastodon, token, state: 'showtime'
+    };
     waiting[uid] && waiting[uid].forEach(resolver => resolver(req.session.mastodon));
     waiting[uid] = undefined;
     res.send('<script>window.close();</script>');
@@ -150,7 +160,7 @@ async function token(req, res) {
       }, 30000);
     }));
   }
-  ({ token } = req.session.mastodon);
+  ({ token } = req.session.mastodon || {});
   if (token)
     res.json(token);
   else
@@ -173,7 +183,36 @@ async function passthru(req, res) {
   res.status(result.status).json(result.data);
 }
 
+async function logout(req, res){
 
+
+  const { state, host, client_id, client_secret, uid, token } = req.session.mastodon || {};
+
+  if (!state || !state === 'showtime' || !host || !client_id || !client_secret || !token) {
+    console.log('bad session cookie', { state, host, client_id, client_secret, uid, token });
+    return res.status(400).send('Bad session cookie!');
+  }
+
+  try {
+
+    let { data } = await axios.post(`https://${host}/oauth/revoke`, {
+      client_id, client_secret, token
+    });
+
+    console.log('got data', { data });
+
+    req.session.mastodon = { state: 'initial' };
+    
+    res.json(true);
+
+  }
+
+  catch (error) {
+    console.log(error);
+    res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
+  };
+  
+}
 
 
 
@@ -182,6 +221,7 @@ module.exports = {
   servers,
   callback,
   token,
+  logout,
   passthru,
 
 };

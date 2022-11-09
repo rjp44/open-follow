@@ -38,6 +38,7 @@ server.get("/mastodon/authUrl", mastodon.authUrl);
 server.get("/mastodon/servers", mastodon.servers);
 server.get("/mastodon/callback", mastodon.callback);
 server.get("/mastodon/token", mastodon.token);
+server.get("/mastodon/logout", mastodon.logout);
 server.use("/mastodon/passthru", mastodon.passthru);
 
 server.use((req, res, next) => {
