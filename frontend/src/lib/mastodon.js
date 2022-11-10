@@ -87,6 +87,7 @@ export default class Mastodon {
     this.checkstate('showtime');
     this.mastodon = axios.create({
       baseURL: `${process.env.REACT_APP_BACKEND_HOST}/mastodon/passthru/api/v1`,
+      withCredentials: true
     });
     try {
       ({ data: this.userInfo} = await this.mastodon.get('accounts/verify_credentials'));

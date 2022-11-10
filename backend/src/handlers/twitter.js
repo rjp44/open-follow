@@ -5,19 +5,20 @@ const OAUTH_CONFIG = { client_id: config.TWITTER_CLIENT_KEY, client_secret: conf
 
 
 function authUrl(req, res, next) {
+  console.log(req.originalUrl, req.session.twitter);
+  let { state, url, codeVerifier } = req.session.twitter || {};
   try {
-    if (req.session.twitter && req.session.twitter.state === 'initial' && req.session.twitter.url && req.session.twitter.url.includes(req.session.twitter.codeVerifier)) {
-      let url = req.session.twitter.url;
-      res.json({ url });
+    if (url && url.includes(codeVerifier)) {
+      res.json({ url, state });
       return;
     }
 
 
     let authClient = new auth.OAuth2User(OAUTH_CONFIG);
     let client = new Client(authClient);
-    let [codeVerifier, state] = [uuid.v4(), 'initial'];
-    let url = authClient.generateAuthURL({
-      state: 'initial',
+    ([codeVerifier, state] = [uuid.v4(), 'initial']);
+    url = authClient.generateAuthURL({
+      state,
       code_challenge_method: "plain",
       code_challenge: codeVerifier
     });
@@ -34,6 +35,7 @@ function authUrl(req, res, next) {
 waiting = {};
 
 async function callback(req, res) {
+  console.log(req.originalUrl, req.session.twitter);
 
   const authClient = new auth.OAuth2User(OAUTH_CONFIG);
   const client = new Client(authClient);
@@ -61,14 +63,16 @@ async function callback(req, res) {
       req.session.twitter.token = token;
       req.session.twitter.state = 'online';
 
-      // Example request
+     
       const myUser = await client.users.findMyUser();
       req.session.twitter = {
         ...req.session.twitter,
         token,
-        state: 'online',
-        id: myUser.data.id
+        state: 'showtime',
+        id: myUser.data.id,
+        myUser: myUser.data
       };
+      console.log('after token fetch', req.session.twitter);
       waiting[codeVerifier] && waiting[codeVerifier].forEach(resolver => resolver(req.session.twitter));
       waiting[codeVerifier] = undefined;
       res.send('<script>window.close();</script>');
@@ -81,21 +85,49 @@ async function callback(req, res) {
 };
 
 
-async function lists(req, res) {
-
+async function checkLogin(req, res) {
   let items;
-
   try {
 
-  
+    let { state, codeVerifier, token, id, myUser } = req.session.twitter || {};
+    console.log(req.originalUrl, req.session.twitter)
+
+    if (state === 'initial')
+      ({ state, codeVerifier, token, id, myUser } = req.session.twitter = await new Promise((resolve, reject) => {
+        waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
+
+        setTimeout(() => {
+          resolve("foo");
+        }, 30000);
+      }));
+
+    if (!(state && codeVerifier && token && id))
+      throw 'no state';
+    
+    console.log('checkLogin', req.session.twitter);
+    if (state && codeVerifier && token && id && myUser) {
+      req.session.save(() => res.json(myUser));
+    }
+    else {
+      res.status(400).send('no user data');
+    }
+  }
+  catch (err) {
+    console.log('checkLogin',{ err }, { state, codeVerifier, token, id, myUser } );
+    res.status(400).send('something went wrong');
+  }
+
+}
+
+async function lists(req, res) {
+  let items;
+  try {
 
     let { state, codeVerifier, token, id } = req.session.twitter || {};
     const { list } = req.params;
 
-    
-
     if (state === 'initial')
-      ({ state, codeVerifier, token, id } = await new Promise((resolve, reject) => {
+      ({ state, codeVerifier, token, id } = req.session.twitter = await new Promise((resolve, reject) => {
         waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
         
         setTimeout(() => {
@@ -105,9 +137,6 @@ async function lists(req, res) {
     
     if (!(state && codeVerifier && token && id))
       throw 'no state';
-
-    req.session.twitter = { state, codeVerifier, token, id };
-
 
     const authClient = new auth.OAuth2Bearer(token.access_token );
     const client = new Client(authClient);
@@ -123,8 +152,7 @@ async function lists(req, res) {
       res.status(400).send(`no handler for ${list}`);
       return;
     }
-
-    
+  
     items = listOperation(id, { max_results: 1000 }, { max_results: 1000 });
     res.type('txt');
     for await (const page of items) {
@@ -140,13 +168,48 @@ async function lists(req, res) {
     else {
       return res.status(400).json(err);
     }
+  
   }
 
 };
+
+
+async function logout(req, res) {
+
+  let { state, codeVerifier, token, id } = req.session.twitter || {};
+
+
+  if (!state || !state === 'showtime' || !token || !id) {
+    console.log('bad session cookie', { state, codeVerifier, token, id });
+    return res.status(400).send('Bad session cookie!');
+  }
+
+  try {
+    const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token});
+    const client = new Client(authClient);
+
+    const response = await authClient.revokeAccessToken();
+
+    console.log('got data', { response });
+
+    req.session.twitter = { state: 'initial' };
+
+    res.json(true);
+
+  }
+
+  catch (error) {
+    console.log(error);
+    res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
+  };
+
+}
 
 
 module.exports = {
   authUrl,
   callback,
   lists,
+  checkLogin,
+  logout
 };

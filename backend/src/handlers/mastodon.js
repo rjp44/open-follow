@@ -59,7 +59,7 @@ async function authUrl(req, res) {
 
   url = `https://${server}//oauth/authorize?response_type=code&scope=${scopes}&client_id=${encodeURIComponent(credentials.client_id)}&redirect_uri=${redirect_uri}`;
   
-  req.session.regenerate(() => {
+
     req.session.mastodon = {
       uid: uuid.v4(),
       client_id: credentials.client_id,
@@ -69,7 +69,6 @@ async function authUrl(req, res) {
       host: server
     };
     res.json({ url });
-  });
 
   
 }
@@ -111,6 +110,7 @@ async function servers(req, res) {
 
 
 async function callback(req, res) {
+  console.log(req.originalUrl, req.session.mastodon );
   const redirect_uri = config.get("mastodon.redirect_uri");
   const scopes = "read follow";
 
@@ -127,7 +127,7 @@ async function callback(req, res) {
   }
 
   try {
-
+    res.status(200);
     let { data: token } = await axios.post(`https://${host}/oauth/token`, {
       code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope:scopes });
 
@@ -144,35 +144,41 @@ async function callback(req, res) {
 
   catch (error) {
     console.log(error);
-    res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
+    res.send(`Invalid verifier or access tokens!\n${error}\nclose this window and retry`);
   };
 }
 
 async function token(req, res) {
   let { state, token, uid } = req.session.mastodon || {};
-  
-  if (uid && !token) {
-    (req.session.mastodon = await new Promise((resolve, reject) => {
-      waiting[uid] = [...(waiting[uid] || []), resolve];
+  try {
+    if (uid && !token) {
+      (req.session.mastodon = await new Promise((resolve, reject) => {
+        waiting[uid] = [...(waiting[uid] || []), resolve];
 
-      setTimeout(() => {
-        resolve("foo");
-      }, 30000);
-    }));
+        setTimeout(() => {
+          reject();
+        }, 60000);
+      }));
+    }
+    ({ token } = req.session.mastodon || {});
+    if (token)
+      res.json(token);
+    else
+      res.status(400).send('not authenticated');
   }
-  ({ token } = req.session.mastodon || {});
-  if (token)
-    res.json(token);
-  else
-    res.status(400).send('not authenticated');
+  catch (err) {
+    console.log(req.originalUrl, err);
+    res.status(500).send('request timeout');
+  }
 }
 
 async function passthru(req, res) {
-  let { state, token, uid, host, body } = req.session.mastodon || {};
-  let { baseUrl, originalUrl, method, protocol } = req;
+  let { state, token, uid, host } = req.session.mastodon || {};
+  let { baseUrl, originalUrl, method, protocol, body } = req;
   let url = originalUrl.slice(baseUrl.length);
   console.log('PASSTHRU', { baseUrl, originalUrl, method, protocol, url, body });
   if (!token) {
+    console.log('bad auth', { state, token, uid, host } )
     res.status(403).send('not authenticated');
     return;
   }
@@ -191,25 +197,24 @@ async function logout(req, res){
   if (!state || !state === 'showtime' || !host || !client_id || !client_secret || !token) {
     console.log('bad session cookie', { state, host, client_id, client_secret, uid, token });
     return res.status(400).send('Bad session cookie!');
+    return;
   }
 
   try {
 
-    let { data } = await axios.post(`https://${host}/oauth/revoke`, {
+    axios.post(`https://${host}/oauth/revoke`, {
       client_id, client_secret, token
     });
 
-    console.log('got data', { data });
+    req.session.regenerate(() => {
+      req.session.mastodon = { state: 'initial' };
+      res.json(true);
+    });
 
-    req.session.mastodon = { state: 'initial' };
-    
-    res.json(true);
 
   }
-
   catch (error) {
     console.log(error);
-    res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
   };
   
 }

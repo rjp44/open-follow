@@ -11,8 +11,7 @@ const server = express();
 server.set('trust proxy', 1);
 server.use(session({
   secret: 'veedEX2zkPNyMs9YeBgO',
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
   cookie: {
     secure: true,
     sameSite: 'none',
@@ -33,6 +32,8 @@ server.get("/", (req, res) => res.json({ message: "Hello world" }));
 server.get("/twitter/authUrl", twitter.authUrl);
 server.get("/twitter/callback", twitter.callback);
 server.get("/twitter/:list(followers|following|blocked|muted)", twitter.lists);
+server.get(["/twitter/checkLogin", "/twitter/userInfo"], twitter.checkLogin);
+server.get("/twitter/logout", twitter.logout);
 
 server.get("/mastodon/authUrl", mastodon.authUrl);
 server.get("/mastodon/servers", mastodon.servers);

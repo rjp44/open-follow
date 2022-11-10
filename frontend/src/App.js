@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import logo from './logo.svg';
-import axios from 'axios';
 import './App.css';
-import './App.css';
+import { useImmer } from "use-immer";
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
@@ -15,6 +12,9 @@ import {
   Routes,
   useLocation
 } from "react-router-dom";
+import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
+
+
 
 
 import './App.css';
@@ -45,48 +45,41 @@ const useStyles = makeStyles(() => ({
 
 
 
-const api = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_HOST}/`,
-  withCredentials: true
-});
-
-axios.defaults.withCredentials = true;
-
-
-
 
 function App() {
   const classes = useStyles();
-
- 
+  const [state, setState] = useImmer(initialState);
+  new SocialInterface(state, setState);
 
   return (
-    <ThemeProvider theme={theme}>
+    <SocialContext.Provider value={state}>
+      <ThemeProvider theme={theme}>
 
-    <div className={classes.root}>
-      <Router>
-        <>
-          <AppBar position="fixed">
-            <Toolbar>
-              <MainMenu />
-              <LocationHeader />
-            </Toolbar>
-          </AppBar>
-          <div className={classes.toolbar} />
-          <Routes>
-          {Object.entries(MenuPaths).map(([key, value]) =>
-            <Route exact={value.exact}
-              path={key}
-              key={key}
-              element={value.element}
-              children={value.children}
-            />
-            )}
-          </Routes>
-        </>
-        </Router>
-      </div>
-    </ThemeProvider>
+        <div className={classes.root}>
+          <Router>
+            <>
+              <AppBar position="fixed">
+                <Toolbar>
+                  <MainMenu />
+                  <LocationHeader />
+                </Toolbar>
+              </AppBar>
+              <div className={classes.toolbar} />
+              <Routes>
+                {Object.entries(MenuPaths).map(([key, value]) =>
+                  <Route exact={value.exact}
+                    path={key}
+                    key={key}
+                    element={value.element}
+                    children={value.children}
+                  />
+                )}
+              </Routes>
+            </>
+          </Router>
+        </div>
+      </ThemeProvider>
+    </SocialContext.Provider>
 
   );
 
