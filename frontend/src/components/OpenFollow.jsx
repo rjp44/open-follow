@@ -2,13 +2,14 @@ import React, { useContext } from 'react';
 import Box from '@mui/material/Box';
 
 import LoadingButton from '@mui/lab/LoadingButton';
+import { Avatar } from '@mui/material';
 import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-
+import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/lab/Alert';
@@ -104,7 +105,7 @@ export default function OpenFollow(props) {
   const state = useContext(SocialContext);
 
   console.log({ state });
-  const list = state?.lists?.['followers'] || [];
+  const list = state?.lists?.['followers']?.entries || [];
 
 
   return (
@@ -112,10 +113,10 @@ export default function OpenFollow(props) {
       <Grid item xs={12} className={classes.row} data-testid="follows">
         <MastodonLogin />   <TwitterLogin />
         <Box
-          sx={{ width: '100%', height: 400, maxWidth: 360, bgcolor: 'background.paper' }}
+          sx={{ width: '100%', height: 400, bgcolor: 'background.paper' }}
         >
           {list.length > 0 && <>
-            <List dense sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
+            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
               {list.map(contact => (
                 <ListItem
                   key={contact.username}
@@ -128,7 +129,13 @@ export default function OpenFollow(props) {
                     />
                   }
                 >
-                  <ListItemText id={contact.username} primary={`${contact.name}  @${contact.username}`} />
+                  <ListItemAvatar><img src={contact.profile_image_url}/></ListItemAvatar>
+                  <ListItemText id={contact.username} secondary={`@${contact.username}`} >
+                    <Typography variant="subtitle1">{contact.name}</Typography>{contact.description}{contact?.matches?.length}
+                    {contact.matches && contact.matches.forEach(m => (
+                      <p><Avatar src={m.avatar} /><b>@{m.acct}</b> - {m.display_name}</p>))}
+                  
+                    </ListItemText>
                 </ListItem>
               ))}
             </List>

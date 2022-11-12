@@ -13,6 +13,8 @@ import {
   useLocation
 } from "react-router-dom";
 import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
+import MastodonBadge from './components/MastodonBadge';
+import TwitterBadge from './components/TwitterBadge';
 
 
 
@@ -51,10 +53,11 @@ function App() {
   const [state, setState] = useImmer(initialState);
   new SocialInterface(state, setState);
 
+
   return (
     <SocialContext.Provider value={state}>
       <ThemeProvider theme={theme}>
-
+        {console.log('app', { state })}
         <div className={classes.root}>
           <Router>
             <>
@@ -62,6 +65,8 @@ function App() {
                 <Toolbar>
                   <MainMenu />
                   <LocationHeader />
+                  <TwitterBadge />
+                  <MastodonBadge />
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />

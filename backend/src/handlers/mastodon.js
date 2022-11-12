@@ -46,7 +46,7 @@ async function authUrl(req, res) {
       let request = `https://${server}/api/v1/apps?client_name=${client_name}&redirect_uris=${redirect_uri}&scopes=${scopes}`;
       console.log('getting credentials', { request });
       let data = await axios.post(request);
-      let credentials = data.data;
+      credentials = data.data;
       console.log('got new credentials', { data, credentials });
       await storage.save(server, JSON.stringify(credentials));
     }
@@ -58,19 +58,19 @@ async function authUrl(req, res) {
   }
 
   url = `https://${server}//oauth/authorize?response_type=code&scope=${scopes}&client_id=${encodeURIComponent(credentials.client_id)}&redirect_uri=${redirect_uri}`;
-  
 
-    req.session.mastodon = {
-      uid: uuid.v4(),
-      client_id: credentials.client_id,
-      client_secret: credentials.client_secret,
-      state: 'initial',
-      url,
-      host: server
-    };
-    res.json({ url });
 
-  
+  req.session.mastodon = {
+    uid: uuid.v4(),
+    client_id: credentials.client_id,
+    client_secret: credentials.client_secret,
+    state: 'initial',
+    url,
+    host: server
+  };
+  res.json({ url });
+
+
 }
 
 
@@ -92,7 +92,6 @@ async function servers(req, res) {
       );
 
       serverList = instances.data.instances.map(instance => instance.name);
-      console.log('Saving', 'serverList', JSON.stringify(serverList));
       await storage.save('serverList', JSON.stringify(serverList));
       setTimeout(() => (serverList = []), 86400 * 1000);
     }
@@ -102,7 +101,6 @@ async function servers(req, res) {
       return;
     }
   }
-  console.log({ serverList });
   res.json(serverList);
 
 }
@@ -110,7 +108,7 @@ async function servers(req, res) {
 
 
 async function callback(req, res) {
-  console.log(req.originalUrl, req.session.mastodon );
+  console.log(req.originalUrl, req.session.mastodon);
   const redirect_uri = config.get("mastodon.redirect_uri");
   const scopes = "read follow";
 
@@ -129,10 +127,11 @@ async function callback(req, res) {
   try {
     res.status(200);
     let { data: token } = await axios.post(`https://${host}/oauth/token`, {
-      code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope:scopes });
+      code, client_id, client_secret, redirect_uri, grant_type: 'authorization_code', scope: scopes
+    });
 
-    console.log('got token', { token })
-    
+    console.log('got token', { token });
+
     req.session.mastodon = {
       ...req.session.mastodon, token, state: 'showtime'
     };
@@ -148,7 +147,36 @@ async function callback(req, res) {
   };
 }
 
-async function token(req, res) {
+async function checkStatus(req, res) {
+  let { state, token, host, uid } = req.session.mastodon || {};
+  if (state !== 'showtime') {
+    res.json({ state });
+  }
+  else {
+    try {
+      if (token && host) {
+        let { data } = await axios.get({
+          url: `https://${host}/api/v1/accounts/verify_credentials`, body,
+          headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+        });
+        res.json({ state, user: data });
+      }
+      else {
+        throw new Error('no valid state');
+      }
+
+    }
+    catch (err) {
+      state = 'initial';
+      req.session.twitter = { state };
+      res.json(state);
+    }
+  }
+
+
+}
+
+async function checkLogin(req, res) {
   let { state, token, uid } = req.session.mastodon || {};
   try {
     if (uid && !token) {
@@ -160,9 +188,9 @@ async function token(req, res) {
         }, 60000);
       }));
     }
-    ({ token } = req.session.mastodon || {});
+    ({ state, token } = req.session.mastodon || {});
     if (token)
-      res.json(token);
+      res.json({ state });
     else
       res.status(400).send('not authenticated');
   }
@@ -178,18 +206,18 @@ async function passthru(req, res) {
   let url = originalUrl.slice(baseUrl.length);
   console.log('PASSTHRU', { baseUrl, originalUrl, method, protocol, url, body });
   if (!token) {
-    console.log('bad auth', { state, token, uid, host } )
+    console.log('bad auth', { state, token, uid, host });
     res.status(403).send('not authenticated');
     return;
   }
   let result = await axios({
-    method, url: `${protocol}://${host}${url}`, body, 
-      headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+    method, url: `${protocol}://${host}${url}`, body,
+    headers: { "Authorization": `${token.token_type} ${token.access_token}` }
   });
   res.status(result.status).json(result.data);
 }
 
-async function logout(req, res){
+async function logout(req, res) {
 
 
   const { state, host, client_id, client_secret, uid, token } = req.session.mastodon || {};
@@ -206,17 +234,16 @@ async function logout(req, res){
       client_id, client_secret, token
     });
 
-    req.session.regenerate(() => {
-      req.session.mastodon = { state: 'initial' };
-      res.json(true);
-    });
+
+    req.session.mastodon = { state: 'initial' };
+    res.json(true);
 
 
   }
   catch (error) {
     console.log(error);
   };
-  
+
 }
 
 
@@ -225,7 +252,8 @@ module.exports = {
   authUrl,
   servers,
   callback,
-  token,
+  checkLogin,
+  checkStatus,
   logout,
   passthru,
 

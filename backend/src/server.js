@@ -12,6 +12,7 @@ server.set('trust proxy', 1);
 server.use(session({
   secret: 'veedEX2zkPNyMs9YeBgO',
   resave: false,
+  saveUninitialized: true,
   cookie: {
     secure: true,
     sameSite: 'none',
@@ -31,14 +32,16 @@ server.use(cors({
 server.get("/", (req, res) => res.json({ message: "Hello world" }));
 server.get("/twitter/authUrl", twitter.authUrl);
 server.get("/twitter/callback", twitter.callback);
-server.get("/twitter/:list(followers|following|blocked|muted)", twitter.lists);
+server.get("/twitter/:list(followers|following|blocked|muted|users)", twitter.lists);
 server.get(["/twitter/checkLogin", "/twitter/userInfo"], twitter.checkLogin);
+server.get("/twitter/checkStatus", twitter.checkStatus);
 server.get("/twitter/logout", twitter.logout);
 
 server.get("/mastodon/authUrl", mastodon.authUrl);
 server.get("/mastodon/servers", mastodon.servers);
 server.get("/mastodon/callback", mastodon.callback);
-server.get("/mastodon/token", mastodon.token);
+server.get("/mastodon/checkLogin", mastodon.checkLogin);
+server.get("/mastodon/checkStatus", mastodon.checkStatus);
 server.get("/mastodon/logout", mastodon.logout);
 server.use("/mastodon/passthru", mastodon.passthru);
 
