@@ -1,19 +1,22 @@
+import { useContext } from 'react';
 import { makeStyles } from '@mui/styles';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { IconButton } from '@mui/material';
 import { Avatar } from '@mui/material';
+import SocialInterface, { SocialContext } from '../lib/socialInterface';
 
 
 
 const useStyles = makeStyles((theme) => ({
   accountHeader: {
-    width: '400px',
+    width: '300px',
     display: 'flex',
+    position: 'relative',
     fontSize: '13px',
     lineHeight: '18px',
     boxSizing: 'border-box',
     padding: '10px 0',
-    margin: '40px auto 10px',
+    margin: '10px 10px 10px',
     borderBottom: '1px solid #282c37',
     background: '#191b22',
     fontFamily: '"mastodon-font-sans-serif", sans-serif',
@@ -21,7 +24,8 @@ const useStyles = makeStyles((theme) => ({
     color: '#fff',
     texRendering: 'optimizelegibility',
     fontFeatureSettings: "kern",
-    borderRadius: '10px'
+    borderRadius: '10px',
+    textAlign: 'center',
   },
   avatar: {
     width: '40px',
@@ -51,18 +55,23 @@ const useStyles = makeStyles((theme) => ({
 
 export default function MastodonBadge(props) {
   const classes = useStyles();
+  const state = useContext(SocialContext);
+  const social = new SocialInterface();
+
+  const user = state.mastodon.userInfo;
 
   return (
     <>
-    <div className={classes.accountHeader}>
-      <div className={classes.avatar}><img src="/assets/mastodon_icon.svg" className={classes.avatar} alt="Mastodon avatar"/></div>
-      <div className={classes.avatar}><Avatar src={props.avatar} className={classes.avatar} /></div>
-      <div className={classes.name}>
-        Signed in as: <span className={classes.username}>@{props.username}</span>
+      {user && <div className={classes.accountHeader}>
+        <div className={classes.avatar}><img src="/assets/mastodon_icon.svg" className={classes.avatar} alt="Mastodon avatar" /></div>
+        <div className={classes.avatar}><Avatar src={user.avatar} className={classes.avatar} /></div>
+        <div className={classes.name}>
+          <div className={classes.username}>@{user.username}</div>
+          <div>{user.display_name}</div>
+        </div>
+        <IconButton aria-label="logout" color="primary" onClick={() => social.mastodonLogout()}><LogoutIcon /></IconButton>
       </div>
-        <IconButton aria-label="logout"  color="primary" onClick={() => props.logout()}><LogoutIcon /></IconButton>
-    </div>
-
+      }
     </>
   );
 
