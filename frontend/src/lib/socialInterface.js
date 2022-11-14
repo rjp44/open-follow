@@ -18,6 +18,8 @@ export default class SocialInterface {
       loaded: 'not-started',
       xrefed: 'not-started'
     }]))),
+    uiState: 'twitterLogin',
+    status: { global: 0, task: 0, text: 'Logon to twitter to proceed' },
     errors: []
   };
 
@@ -77,7 +79,9 @@ export default class SocialInterface {
         this.setState((draft) => {
           draft.twitter.state = newState;
           draft.twitter.userInfo = userInfo;
+          draft.uiState = (SocialInterface.state.globalState.mastodon.state !== 'showtime') ? 'mastodonLogin' : 'main';
         });
+
         for (const [name, list] of Object.entries(SocialInterface.state.globalState.lists)) {
           console.log('processing', { name, list });
           if (list.loaded !== 'not-started') {
@@ -85,8 +89,8 @@ export default class SocialInterface {
           }
           this.setState((draft) => { draft.lists[name] = { loaded: 'loading', entries: [] }; });
           for await (const slice of this.twitter.getList(name)) {
-            console.log('got slice', { meta: slice.meta, length: slice.data.length });
-            this.setState((draft) => { draft.lists[name].entries.push(...slice.data); });
+            console.log('got slice', {  length: slice.length });
+            this.setState((draft) => { draft.lists[name].entries.push(...slice); });
           }
           
           this.setState((draft) => { draft.lists[name].loaded = 'done'; });
@@ -124,6 +128,7 @@ export default class SocialInterface {
         this.setState((draft) => {
           draft.mastodon.state = newState;
           draft.mastodon.userInfo = userInfo;
+          draft.uiState = (SocialInterface.state.globalState.twitter.state !== 'showtime') ? 'twitterLogin' : 'main';
         });
         this.xrefLists();
       }
@@ -150,12 +155,14 @@ export default class SocialInterface {
       this.setState((draft) => { draft.lists[name].xrefed = 'progress'; });
       for (let [index, entry] of Object.entries(list.entries)) {
   
-        let matches = await this.mastodon.search(`@${entry.username}@`, 'accounts');
-        console.log('match', { entry, matches });
-        if (matches?.accounts?.length) {
+        let matches = await this.mastodon.search(`@${entry.username}@`, 'accounts')
+        let accounts = matches?.accounts?.filter(m => m.acct.replace(/@.*/, '').toLowerCase() === entry.username.toLowerCase())
+        console.log('match', { entry, accounts });
+        if (accounts?.length) {
+
           this.setState((draft) => {
-            draft.lists[name].entries[index].matches = matches.accounts;
-            draft.lists[name].entries[index].strongMatches = matches.accounts.filter(m => m.displayname === entry.name);
+            draft.lists[name].entries[index].matches = accounts;
+            draft.lists[name].entries[index].strongMatches = accounts.filter(m => m.displayname === entry.name);
           });
         }
       }

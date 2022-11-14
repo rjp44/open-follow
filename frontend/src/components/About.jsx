@@ -30,7 +30,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 
 export default function About(props) {
   const classes = useStyles();
-  const [, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(true);
   const navigate = useNavigate();
 
   const handleClose = () => {
@@ -40,7 +40,7 @@ export default function About(props) {
 
   return (
 
-    <Dialog fullScreen open={props.match} onClose={handleClose} TransitionComponent={Transition}>
+    <Dialog fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
       <AppBar className={classes.appBar}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={handleClose} component={RouterLink} to='/' aria-label="close">
@@ -54,34 +54,31 @@ export default function About(props) {
       <div className={classes.toolbar} />
       <Paper className={classes.paper}>
         <Typography variant="body1">
-          Locus Plus is a Progressive Web Application which gives the user the NATO alphabet pronunciation of the Open Location Code for their current device location.
-          It also now includes an operator console which allows read back OLC codes and OS grid references to be entered and inspected via Open Streetmap Tiles.
+          Open Follow is a web application that allows you to migrate your social graph between social media applications. In this release, it supports just one migration, which is from twitter to mastodon.
+          Supporting migrations in the opposite direction, mastodon to twitter will be a further development, as will adding other applications.
         </Typography>
       </Paper>
-      <Paper className={classes.paper}>
+      {false && <Paper display={false} className={classes.paper}>
         <Typography variant="h6">Source Code</Typography>
         <Typography variant="body1">
           This demo is hosted for convenience at <b>locus.plus</b>. The source code is available to anyone to use and modify under the very permissive BSD open source licence. You can download it here:
         </Typography>
         <Typography><GitHubIcon /><Link href="https://github.com/rjp44/locus-plus/" target="_blank" rel="noopener">rjp44/locus-plus</Link></Typography>
-      </Paper>
+      </Paper>}
       <Paper className={classes.paper}>
         <Typography variant="h6">Privacy</Typography>
         <Typography variant="body1">
-          This is a client side only application. We don't use cookies or collect any information at all from your device that we then send anywhere. A log of IP addresses requesting the application exists on our systems but this is only used for diagnostic purposes. We do not log any transactions or any information about your location.
-      </Typography>
-        <Typography variant="body1">
-          The only external database we use is <Link href="https://www.openstreetmap.org/about" target="_blank" rel="noopener">Open Streetmap</Link> from which the application requests map tiles,
-      when being used in online mode. I guess it is feasible that your location could be infered by someone who has access to their logs, so don't do this if you have any reason to be paranoid.
-      </Typography>
-        <Typography variant="body1">
-          The source code may be inspected. The application code served at <Link hreaf="https://locus.plus/" target="_blank" rel="noopener">locus.plus</Link> is the last commit on the head of the <b>main</b> branch at <Link href="https://github.com/rjp44/locus-plus#main">GitHub</Link> (subject to CI test passing, check the status).
+          To the greatest possible extent, this application does all of it's work client side. We don't want to collect any of your private information and do our best to make sure none of it is ever stored on our systems. For technical reasons, because of the way that both the twitter
+          and mastodon APIs work, we have to do OAuth login and actually make API requests through server side code. We complete an OAuth login process, and then store the short term access token that you have authorised in an ephemeral session store on our servers and access it via an essential cookie that we set.
+          We do not store a refresh token or access the API at all once you leave this web page. With the exception of information stored for short term debug purposes, we do dot capture or store any personally identifiable information persistently on our servers once your session on the website is complete.
+
         </Typography>
-      </Paper>
+        </Paper>
       <Paper className={classes.paper}>
         <Typography variant="h6">Contact</Typography>
         <Typography variant="body1">
-          The author is <Link href="mailto:rob@pickering.org" target="_blank" rel="noopener">rob@pickering.org</Link>. If you are reporting issues or looking for enhancements then raise an issue on <Link href="https://github.com/rjp44/locus-plus/" target="_blank" rel="noopener">Github</Link>.
+            <p>The author is <Link href="mailto:rob@pickering.org" target="_blank" rel="noopener">rob@pickering.org</Link>.</p>
+            {false && (<p>If you are reporting issues or looking for enhancements then raise an issue on <Link href="https://github.com/rjp44/locus-plus/" target="_blank" rel="noopener">Github</Link>.</p>)}
         </Typography>
 
       </Paper>

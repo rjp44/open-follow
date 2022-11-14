@@ -1,4 +1,5 @@
 const { Client, auth } = require('twitter-api-sdk');
+
 const config = process.env;
 const uuid = require('uuid');
 const OAUTH_CONFIG = { client_id: config.TWITTER_CLIENT_KEY, client_secret: config.TWITTER_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
@@ -16,7 +17,7 @@ function authUrl(req, res, next) {
 
     let authClient = new auth.OAuth2User(OAUTH_CONFIG);
     let client = new Client(authClient);
-    ([codeVerifier, state] = [uuid.v4(), 'initial']);
+    ([codeVerifier, state] = [codeVerifier || uuid.v4(), 'initial']);
     url = authClient.generateAuthURL({
       state,
       code_challenge_method: "plain",
@@ -159,6 +160,7 @@ async function checkStatus(req, res) {
 
 async function lists(req, res) {
   let items;
+
   try {
 
     let { state, codeVerifier, token, id } = req.session.twitter || {};
@@ -200,15 +202,15 @@ async function lists(req, res) {
     }, { max_results: 1000 });
     res.type('txt');
     for await (const page of items) {
-      console.log('got page', { page });
-      res.write(JSON.stringify(page));
+      console.log('got page', { meta: page.meta });
+      page.data.forEach(data => res.write(JSON.stringify(data) + ','));
     }
     res.end();
 
   }
   catch (err) {
     console.log(err);
-    if (err.status == 429) {
+    if (err.status === 429) {
 
       res.end();
     }

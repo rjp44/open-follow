@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import Box from '@mui/material/Box';
 
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -9,18 +9,24 @@ import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/lab/Alert';
+import Tab from '@mui/material/Tab';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
+
+
 import { makeStyles } from '@mui/styles';
 import { Paper } from '@mui/material';
 import { SocialContext } from '../lib/socialInterface';
+import ListView from './ListView';
+import excerptHtml from 'excerpt-html';
 
 import MastodonLogin from './MastodonLogin';
 import TwitterLogin from './TwitterLogin';
-
-
 
 
 
@@ -60,93 +66,45 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     left: 0
   },
-  map: {
-    height: 200
-  },
-  phoneticOutput: {
-    minHeight: '4rem'
-  },
-  locationOverlay: {
-    position: 'absolute',
-    top: 80,
-    width: '70%',
-    left: '15%',
-    zIndex: 1000
-  },
-  gridRef: {
-    position: 'absolute',
-    top: 25,
-    width: '70%',
-    right: '15%',
-    background: 'rgba(255, 255, 255, 0.6)',
-    zIndex: 1000
-  },
-  nearest: {
-    position: 'absolute',
-    top: 60,
-    width: '70%',
-    right: '15%',
-    background: 'rgba(255, 255, 255, 0.6)',
-    zIndex: 1000
-  },
-  accuracyOverlay: {
-    position: 'absolute',
-    left: 10,
-    bottom: 10,
-    zIndex: 1000,
-    background: 'rgba(255, 255, 255, 0.6)'
-  }
+
 }));
 
 
 
 export default function OpenFollow(props) {
   const classes = useStyles();
+  const [tab, setTab] = useState('followers');
   const state = useContext(SocialContext);
 
   console.log({ state });
   const list = state?.lists?.['followers']?.entries || [];
 
 
+
   return (
-    <Grid container className={classes.root}>
-      <Grid item xs={12} className={classes.row} data-testid="follows">
-        <MastodonLogin />   <TwitterLogin />
-        <Box
-          sx={{ width: '100%', height: 400, bgcolor: 'background.paper' }}
-        >
-          {list.length > 0 && <>
-            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-              {list.map(contact => (
-                <ListItem
-                  key={contact.username}
-                  secondaryAction={
-                    <Checkbox
-                      edge="end"
-                    //onChange={handleToggle(value)}
-                    //checked={checked.indexOf(value) !== -1}
-                    //inputProps={{ 'aria-labelledby': labelId }}
-                    />
-                  }
-                >
-                  <ListItemAvatar><img src={contact.profile_image_url}/></ListItemAvatar>
-                  <ListItemText id={contact.username} secondary={`@${contact.username}`} >
-                    <Typography variant="subtitle1">{contact.name}</Typography>{contact.description}{contact?.matches?.length}
-                    {contact.matches && contact.matches.forEach(m => (
-                      <p><Avatar src={m.avatar} /><b>@{m.acct}</b> - {m.display_name}</p>))}
-                  
-                    </ListItemText>
-                </ListItem>
-              ))}
-            </List>
-          </>
-          }
+    <>
+      <TwitterLogin open={state.uiState === 'twitterLogin'} />
+      <MastodonLogin open={state.uiState === 'mastodonLogin'} />
+      {state.uiState === 'main' && (<>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <TabContext value={tab}  aria-label="List tab">
+            <TabList onChange={(e, value) => setTab(value)} aria-label="lab API tabs example">
+            {Object.entries(state.lists).map(([listName, list]) =>
+              <Tab label={listName} value={listName} />
+            )}
+            </TabList>
+
+          {Object.entries(state.lists).map(([listName, list]) =>
+            <TabPanel value={listName} >
+              <ListView list={list?.entries} />
+              </TabPanel>
+          )}
+          </TabContext>
         </Box>
+      </>)
+      }
+    </>
 
-      </Grid>
-
-    </Grid>
   );
 };
-
 

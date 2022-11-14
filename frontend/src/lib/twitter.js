@@ -35,7 +35,6 @@ export default class Twitter extends Social {
         credentials: "include",
       }
     );
-    // response.body is a ReadableStream
     const reader = response.body.getReader();
     let str = "";
     let read;
@@ -46,21 +45,29 @@ export default class Twitter extends Social {
       //  boundaries but these may occaisionaly get further chunked in transit so if JSON parse
       //  fails them we hang on for later chunks and try again.
       try {
-        let obj = JSON.parse(str);
+        let [exp, remnant] = findLastLineEnd(str);
+        let obj = JSON.parse('[' + exp + ']');
+        str = remnant;
         console.log('got obj', { obj });
-        if (obj.data && obj.meta) {
-          console.log(`yielding ${obj.meta.result_count} entries`, obj.data);
-          str = "";
-          yield obj;
-        }
+        yield obj;
+
       } catch (err) {
-        console.log(err, `accumulating chunks ${str.length} overflow`);
+        console.log(err, `this shouldn't happen ${str} ${str.length} overflow`);
       }
+    }
+
+    function findLastLineEnd(str) {
+      if (!str || !str.length)
+        return [];
+      let i;
+      for (i = str.length - 1; (!str.includes('},', i - 1) || str.charAt(i - 2) === '\\') && i > 0; i--)
+        ;
+      return ([str.slice(0, i), (i > 0 ? str.slice(i + 1) : str)]);
     }
 
   }
 };
-  
+
 
 
 

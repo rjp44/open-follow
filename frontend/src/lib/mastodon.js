@@ -21,7 +21,19 @@ export default class Mastodon extends Social {
       baseURL: `${process.env.REACT_APP_BACKEND_HOST}/mastodon/passthru`,
       withCredentials: true
     });
+    this.mastodon.interceptors.response.use(async (res) => {
+      let [remaining, resetTime] = [parseInt(res.headers['x-ratelimit-remaining']), res.headers['x-ratelimit-reset']];
+      if (remaining && resetTime) {
+        let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf;
+        let delay = timeUntil / remaining;
+        console.log('mastodon API', { remaining, timeUntil, delay });
+        await new Promise((reject, resolve) => setTimeout(resolve, delay));
+      }
+      return res;
+    });
+
   }
+
 
       
   
@@ -69,10 +81,12 @@ export default class Mastodon extends Social {
     this.checkstate('showtime');
     let url = `/api/v2/search?q=${encodeURIComponent(term)}${type && ('&type=' + type)}`;
     try {
-      let { data } = await this.mastodon.get(url);
+      let res = await this.mastodon.get(url);
+      let { data } = res;
       return data;
     }
     catch (err) {
+      console.log(err);
       return false;
     }
   }

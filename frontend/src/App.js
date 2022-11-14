@@ -5,7 +5,7 @@ import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
 import { makeStyles } from '@mui/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import {
   HashRouter as Router,
   Route,
@@ -15,6 +15,7 @@ import {
 import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
 import MastodonBadge from './components/MastodonBadge';
 import TwitterBadge from './components/TwitterBadge';
+import SelectAllControl from './components/SelectAllControl'
 
 
 
@@ -23,26 +24,12 @@ import './App.css';
 
 const theme = createTheme({});
 const useStyles = makeStyles(() => ({
-  root: {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
+  selectAll: {
+    position: "relative",
+    flexGrow: 1,
+
   },
-  row: {
-    position: 'center'
-  },
-  wrapper: {
-    margin: theme.spacing(1),
-    position: 'relative',
-  },
-  buttonProgress: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -12,
-    marginLeft: -12,
-  },
-  toolbar: theme.mixins.toolbar
+  toolbar: { ...theme.mixins.toolbar, height: 90 }
 }));
 
 
@@ -58,18 +45,24 @@ function App() {
     <SocialContext.Provider value={state}>
       <ThemeProvider theme={theme}>
         {console.log('app', { state })}
-        <div className={classes.root}>
+
           <Router>
-            <>
+          <>
+            <Box sx={{ flexGrow: 1 }}>
               <AppBar position="fixed">
                 <Toolbar>
                   <MainMenu />
                   <LocationHeader />
                   <TwitterBadge />
                   <MastodonBadge />
+                  <div className={classes.selectAll} >
+                    { state.uiState === 'main' && (<SelectAllControl className={classes.selectAll} />) }
+                  </div>
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />
+              </Box>
+            <Box sx={{ flexGrow: 1 }}>
               <Routes>
                 {Object.entries(MenuPaths).map(([key, value]) =>
                   <Route exact={value.exact}
@@ -80,9 +73,9 @@ function App() {
                   />
                 )}
               </Routes>
+              </Box>
             </>
           </Router>
-        </div>
       </ThemeProvider>
     </SocialContext.Provider>
 

@@ -205,16 +205,41 @@ async function passthru(req, res) {
   let { baseUrl, originalUrl, method, protocol, body } = req;
   let url = originalUrl.slice(baseUrl.length);
   console.log('PASSTHRU', { baseUrl, originalUrl, method, protocol, url, body });
-  if (!token) {
-    console.log('bad auth', { state, token, uid, host });
-    res.status(403).send('not authenticated');
-    return;
-  }
-  let result = await axios({
-    method, url: `${protocol}://${host}${url}`, body,
-    headers: { "Authorization": `${token.token_type} ${token.access_token}` }
-  });
+
+try{
+    if (!token || state != 'showtime')
+      throw new Error(`bad auth ${state} ${token && token.length} ${uid}, ${host}`);
+
+    let api = axios.create(
+      {
+        headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+      }
+    );
+    api.interceptors.response.use(async (res) => {
+      let [remaining, resetTime] = [parseInt(res.headers['x-ratelimit-remaining']), res.headers['x-ratelimit-reset']];
+      if (remaining && resetTime) {
+        let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf();
+        let delay = timeUntil / remaining;
+        console.log('passthru', { remaining, timeUntil, delay });
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      console.log('returning', { res });
+      return res;
+    });
+
+    let result = await api({
+      method, url: `${protocol}://${host}${url}`, body,
+      headers: { "Authorization": `${token.token_type} ${token.access_token}` }
+    });
+  console.log('returning', { result });
   res.status(result.status).json(result.data);
+
+  }
+  catch (err) {
+    console.log(err);
+    res.status(403).send(err);
+  }
+
 }
 
 async function logout(req, res) {
