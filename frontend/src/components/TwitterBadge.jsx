@@ -1,7 +1,6 @@
 import { useContext } from 'react';
 import { makeStyles } from '@mui/styles';
 import LogoutIcon from '@mui/icons-material/Logout';
-import TwitterIcon from '@mui/icons-material/Twitter';
 import { IconButton } from '@mui/material';
 import { Avatar } from '@mui/material';
 import SocialInterface, { SocialContext } from '../lib/socialInterface';
