@@ -5,7 +5,7 @@ import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
 import { makeStyles } from '@mui/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Box } from '@mui/material';
+import { AppBar, Button, Toolbar, Typography, Box } from '@mui/material';
 import {
   HashRouter as Router,
   Route,
@@ -37,9 +37,9 @@ const useStyles = makeStyles(() => ({
 
 function App() {
   const classes = useStyles();
+
   const [state, setState] = useImmer(initialState);
   new SocialInterface(state, setState);
-
 
   return (
     <SocialContext.Provider value={state}>
@@ -48,21 +48,18 @@ function App() {
 
           <Router>
           <>
-            <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ flexGrow: 1}}>
               <AppBar position="fixed">
                 <Toolbar>
                   <MainMenu />
                   <LocationHeader />
                   <TwitterBadge />
                   <MastodonBadge />
-                  <div className={classes.selectAll} >
-                    { state.uiState === 'main' && (<SelectAllControl className={classes.selectAll} />) }
-                  </div>
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />
               </Box>
-            <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ flexGrow: 1}}>
               <Routes>
                 {Object.entries(MenuPaths).map(([key, value]) =>
                   <Route exact={value.exact}

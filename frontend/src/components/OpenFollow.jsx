@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -21,7 +21,7 @@ import TabPanel from '@mui/lab/TabPanel';
 
 import { makeStyles } from '@mui/styles';
 import { Paper } from '@mui/material';
-import { SocialContext } from '../lib/socialInterface';
+import SocialInterface, { SocialContext } from '../lib/socialInterface';
 import ListView from './ListView';
 import excerptHtml from 'excerpt-html';
 
@@ -75,35 +75,65 @@ export default function OpenFollow(props) {
   const classes = useStyles();
   const [tab, setTab] = useState('followers');
   const state = useContext(SocialContext);
+  const tabHeaderRef = useRef();
+  const [tabHeight, setTabHeight] = useState({ width: 0, height: 0 });
+  const social = new SocialInterface();
 
-  console.log({ state });
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+
   const list = state?.lists?.['followers']?.entries || [];
 
+  function getWindowDimensions() {
+    const { innerHeight: height } = window;
+    return {
+      height
+    };
+  }
 
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions(getWindowDimensions());
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (tabHeaderRef.current) {
+      setTabHeight( tabHeaderRef.current.offsetHeight );
+    }
+  }, []);
+
+  function selectAll(listName, state) {
+    social.select({ listName }, state);
+  }
+  function select({ listName, contact, acct }, state) {
+    social.select({ listName, contact, acct }, state);
+  }
+
+
+  let mainUi = state.twitter.state === 'showtime' && state.mastodon.state === 'showtime';
 
   return (
-    <>
-      <TwitterLogin open={state.uiState === 'twitterLogin'} />
-      <MastodonLogin open={state.uiState === 'mastodonLogin'} />
-      {state.uiState === 'main' && (<>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <TabContext value={tab}  aria-label="List tab">
-            <TabList onChange={(e, value) => setTab(value)} aria-label="lab API tabs example">
+    <Box sx={{ maxHeight: 500 }}>
+      <TwitterLogin open={state.twitter.state !== 'showtime'} />
+      <MastodonLogin open={state.twitter.state === 'showtime' && state.mastodon.state !== 'showtime'} />
+      {mainUi && (<>
+        <TabContext value={tab} aria-label="List tab">
+          <TabList onChange={(e, value) => setTab(value)} ref={tabHeaderRef} aria-label="lab API tabs example">
             {Object.entries(state.lists).map(([listName, list]) =>
               <Tab label={listName} value={listName} />
             )}
-            </TabList>
-
+          </TabList>
           {Object.entries(state.lists).map(([listName, list]) =>
             <TabPanel value={listName} >
-              <ListView list={list?.entries} />
-              </TabPanel>
+              <ListView listHeight={`${windowDimensions.height - 90 - tabHeight}px`} list={list} name={listName} selectAll={(state) => select({ listName }, state)} select={select} />
+            </TabPanel>
           )}
-          </TabContext>
-        </Box>
+        </TabContext>
       </>)
       }
-    </>
+    </Box>
 
   );
 };

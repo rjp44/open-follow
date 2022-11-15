@@ -204,7 +204,6 @@ async function passthru(req, res) {
   let { state, token, uid, host } = req.session.mastodon || {};
   let { baseUrl, originalUrl, method, protocol, body } = req;
   let url = originalUrl.slice(baseUrl.length);
-  console.log('PASSTHRU', { baseUrl, originalUrl, method, protocol, url, body });
 
 try{
     if (!token || state != 'showtime')
@@ -220,10 +219,8 @@ try{
       if (remaining && resetTime) {
         let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf();
         let delay = timeUntil / remaining;
-        console.log('passthru', { remaining, timeUntil, delay });
         await new Promise(resolve => setTimeout(resolve, delay));
       }
-      console.log('returning', { res });
       return res;
     });
 
@@ -231,7 +228,6 @@ try{
       method, url: `${protocol}://${host}${url}`, body,
       headers: { "Authorization": `${token.token_type} ${token.access_token}` }
     });
-  console.log('returning', { result });
   res.status(result.status).json(result.data);
 
   }
@@ -254,16 +250,12 @@ async function logout(req, res) {
   }
 
   try {
-
     axios.post(`https://${host}/oauth/revoke`, {
       client_id, client_secret, token
     });
 
-
     req.session.mastodon = { state: 'initial' };
     res.json(true);
-
-
   }
   catch (error) {
     console.log(error);

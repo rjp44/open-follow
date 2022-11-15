@@ -103,7 +103,7 @@ async function checkLogin(req, res) {
         waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
 
         setTimeout(() => {
-          reject();
+          reject(new Error('timed out waiting for login'));
         }, 30000);
       }));
 
@@ -166,17 +166,9 @@ async function lists(req, res) {
     let { state, codeVerifier, token, id } = req.session.twitter || {};
     const { list } = req.params;
 
-    if (state === 'initial')
-      ({ state, codeVerifier, token, id } = req.session.twitter = await new Promise((resolve, reject) => {
-        waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
 
-        setTimeout(() => {
-          reject();
-        }, 30000);
-      }));
-
-    if (!(state && codeVerifier && token && id))
-      throw 'no state';
+    if (!(state === 'showtime' && codeVerifier && token && id))
+      throw new Error('no/wrong state');
 
     const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
     const client = new Client(authClient);
@@ -203,13 +195,13 @@ async function lists(req, res) {
     res.type('txt');
     for await (const page of items) {
       console.log('got page', { meta: page.meta });
-      page.data.forEach(data => res.write(JSON.stringify(data) + ','));
+      page.data && page.data.forEach(data => res.write(JSON.stringify(data) + ','));
     }
     res.end();
 
   }
   catch (err) {
-    console.log(err);
+    console.log({ err });
     if (err.status === 429) {
 
       res.end();

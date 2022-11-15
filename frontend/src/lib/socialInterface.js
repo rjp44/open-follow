@@ -112,6 +112,7 @@ export default class SocialInterface {
       if (newState !== 'showtime' && oldState !== newState) {
         this.setState((draft) => {
           draft.mastodon.userInfo = undefined;
+          draft.uiState = (SocialInterface.state.globalState.twitter.state !== 'showtime') ? 'twitterLogin' : 'mastodonLogin';
         });
       }
       if (newState === 'initial' && oldState !== newState) {
@@ -154,8 +155,19 @@ export default class SocialInterface {
       */
       this.setState((draft) => { draft.lists[name].xrefed = 'progress'; });
       for (let [index, entry] of Object.entries(list.entries)) {
+
+        let profileMatches = SocialInterface.findFedi(entry.name + entry.description).filter(p => {
+          if (SocialInterface.mastodon.servers.find(s => s.toLowerCase() === p.host)) {
+            console.log('found mastadon host for ', { p });
+          }
+          else {
+            console.log('no host for ', { p });
+          }
+        });
+        let searchString = profileMatches.length ? `@${profileMatches[0].user}@${profileMatches[0].host}` : `@${entry.username}@`
+
   
-        let matches = await this.mastodon.search(`@${entry.username}@`, 'accounts')
+        let matches = await this.mastodon.search(searchString, 'accounts')
         let accounts = matches?.accounts?.filter(m => m.acct.replace(/@.*/, '').toLowerCase() === entry.username.toLowerCase())
         console.log('match', { entry, accounts });
         if (accounts?.length) {
@@ -168,6 +180,29 @@ export default class SocialInterface {
       }
       this.setState((draft) => { draft.lists[name].xrefed = 'done'; });
     }
+  }
+static findFedi(str) {
+  return [...(str.matchAll(/@?([a-zA-Z0-9_]+)@([a-zA-Z0-9_\-.]+)/g) || []),
+  ...([...str.matchAll(/([a-zA-Z0-9_\-.]+)\/@([a-zA-Z0-9_]+)/g)] || []).map(r => {
+    let temp = r[1];
+    r[1] = r[2];
+    r[2] = temp;
+    return r;
+  })].map(([match, user, host]) => ({ match, user, host: host.toLowerCase() })) ;
+    
+}
+
+
+  select({ listName, contact, acct }, state) {
+    console.log('selectAll', { listName, contact, acct, state })
+    this.setState((draft) => {
+      draft.lists[listName].entries.forEach(entry => {
+        (!contact || contact === entry.username) && entry.matches && entry.matches.forEach(match => {
+          console.log(`setting`, { match, state });
+          (!acct || acct === match.acct) && (match.selected = state);
+        });
+      });
+    });
   }
 
   async mastodonLogout() {
