@@ -92,7 +92,7 @@ export default class Social {
 
   async checkStatus() {
     let { data } = await this.api.get(`/checkStatus`);
-    console.log({ data });
+    console.log('checkStatus', { data });
     this.state = data.state || 'initial';
     return data.state;
   }
@@ -103,13 +103,18 @@ export default class Social {
    */
   async logout(callback) {
     this.checkstate("showtime");
-    console.log('logout', this.state);
-    let { data } = await this.api.get(`/logout`);
-
-    console.log({ data });
-    this.state = "initial";
-    callback && callback(data);
-    return data;
+    try {
+      let { data } = await this.api.get(`/logout`);
+      console.log({ data });
+      callback && callback(data);
+    }
+    catch (err) {
+      console.log({ err }, 'on logout');
+    }
+    finally {
+      this.state = "initial";
+      return;
+    }
   }
 };
 

@@ -5,7 +5,9 @@ import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
 import { makeStyles } from '@mui/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Button, Toolbar, Typography, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box } from '@mui/material';
+import EastIcon from '@mui/icons-material/East';
+
 import {
   HashRouter as Router,
   Route,
@@ -15,7 +17,8 @@ import {
 import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
 import MastodonBadge from './components/MastodonBadge';
 import TwitterBadge from './components/TwitterBadge';
-import SelectAllControl from './components/SelectAllControl'
+import DataDownload from './components/DataDownload';
+
 
 
 
@@ -54,7 +57,10 @@ function App() {
                   <MainMenu />
                   <LocationHeader />
                   <TwitterBadge />
+                  {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon/> }
                   <MastodonBadge />
+                  <Box sx={{ flexGrow: 1 }}/>
+                  <DataDownload data={state.lists} />
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />

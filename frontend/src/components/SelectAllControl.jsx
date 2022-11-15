@@ -1,17 +1,13 @@
-import { useContext, useState } from 'react';
-import { makeStyles } from '@mui/styles';
-import { Checkbox, Button, IconButton, Menu, MenuItem, Box, Tooltip, Switch } from '@mui/material';
+import { useState } from 'react';
+import { IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import certaintyChips from './CertaintyChips';
 
 
 
 
-const useStyles = makeStyles((theme) => ({
-
-}));
 
 export default function SelectAllControl(props) {
-  const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -62,6 +58,9 @@ export default function SelectAllControl(props) {
         }}
       >
         <MenuItem onClick={() => select(true)}>Select All</MenuItem>
+        {certaintyChips.map((chip, index) => (
+          chip !== undefined && <MenuItem onClick={() => select((acct) => (acct.certainty.tier === index))}>Select All&nbsp;{chip}</MenuItem>
+        ))}
         <MenuItem onClick={() => select(false)}>Deselect All</MenuItem>
       </Menu>
     </div>

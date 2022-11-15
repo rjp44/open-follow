@@ -141,6 +141,7 @@ async function checkStatus(req, res) {
             'description', 'profile_image_url', 'username', 'verified'
           ]
         });
+        console.log('twiiter, positive checkStatus', { state, user: myUser })
         res.json({ state, user: myUser });
       }
       else {
@@ -149,6 +150,7 @@ async function checkStatus(req, res) {
 
     }
     catch (err) {
+      console.log(err);
       state = 'initial';
       req.session.twitter = { state };
       res.json(state);
@@ -168,7 +170,7 @@ async function lists(req, res) {
 
 
     if (!(state === 'showtime' && codeVerifier && token && id))
-      throw new Error('no/wrong state');
+      throw new Error('no/wrong state', {cause: 401});
 
     const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
     const client = new Client(authClient);
@@ -203,11 +205,11 @@ async function lists(req, res) {
   catch (err) {
     console.log({ err });
     if (err.status === 429) {
-
       res.end();
     }
-    else {
-      return res.status(400).json(err);
+    else{
+      
+      return res.status(err.cause && parseInt(err.cause) === err.cause ? err.cause : 400).json(err);
     }
 
   }
