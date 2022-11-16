@@ -51,11 +51,7 @@ export default function OpenFollow(props) {
     }
   }, []);
 
-
-  function select({ listName, contact, acct }, state) {
-    social.select({ listName, contact, acct }, state);
-  }
-
+  
 
   let mainUi = state.twitter.state === 'showtime' && state.mastodon.state === 'showtime';
 
@@ -67,12 +63,12 @@ export default function OpenFollow(props) {
         <TabContext value={tab} aria-label="List tab">
           <TabList onChange={(e, value) => setTab(value)} ref={tabHeaderRef} >
             {Object.entries(state.lists).map(([listName, list]) =>
-              <Tab label={listName} value={listName} />
+              <Tab key={listName}  label={listName} value={listName} />
             )}
           </TabList>
           {Object.entries(state.lists).map(([listName, list]) =>
             <TabPanel value={listName} >
-              <ListView listHeight={`${windowDimensions.height - 90 - tabHeight}px`} list={list} name={listName} selectAll={(state) => select({ listName }, state)} select={select} />
+              <ListView listHeight={`${windowDimensions.height - 130 - tabHeight}px`} list={list} name={listName} saveList={social.saveList} selectAll={(state) => social.select({ listName }, state)} select={social.select} />
             </TabPanel>
           )}
         </TabContext>

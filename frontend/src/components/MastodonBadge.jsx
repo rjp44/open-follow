@@ -9,7 +9,7 @@ import SocialInterface, { SocialContext } from '../lib/socialInterface';
 
 const useStyles = makeStyles((theme) => ({
   accountHeader: {
-    width: '300px',
+    width: '350px',
     display: 'flex',
     position: 'relative',
     fontSize: '13px',
@@ -66,7 +66,7 @@ export default function MastodonBadge(props) {
         <div className={classes.avatar}><img src="/assets/mastodon_icon.svg" className={classes.avatar} alt="Mastodon avatar" /></div>
         <div className={classes.avatar}><Avatar src={user.avatar} className={classes.avatar} /></div>
         <div className={classes.name}>
-          <div className={classes.username}>@{user.username}</div>
+          <div className={classes.username}>@{user.username}@{state.mastodon.host}</div>
           <div>{user.display_name}</div>
         </div>
         <IconButton aria-label="logout" color="primary" onClick={() => social.mastodonLogout()}><LogoutIcon /></IconButton>
