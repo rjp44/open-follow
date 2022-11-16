@@ -25,7 +25,8 @@ server.use(
 );
 server.use(cors({
   origin: ['http://localhost:3000', 'https://twitter.com', 'https://openfollow.openshare.me'],
-  allowedHeaders: ['cookie'],
+  allowedHeaders: ['Cookie', 'Link'],
+  exposedHeaders: ['Link'],
   credentials: true,
 
 }));

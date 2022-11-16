@@ -1,4 +1,5 @@
 import axios from 'axios';
+import linkParser from 'parse-link-header';
 import Social from './social';
 
 
@@ -19,7 +20,9 @@ export default class Mastodon extends Social {
     });
     this.mastodon = axios.create({
       baseURL: `${process.env.REACT_APP_BACKEND_HOST}/mastodon/passthru`,
-      withCredentials: true
+      withCredentials: true,
+      timeout: 10000,
+
     });
     this.mastodon.interceptors.response.use(async (res) => {
       let [remaining, resetTime] = [parseInt(res.headers['x-ratelimit-remaining']), res.headers['x-ratelimit-reset']];
@@ -90,6 +93,50 @@ export default class Mastodon extends Social {
       return false;
     }
   }
+
+  async *getList(list, id) {
+    if (!id)
+      id =  this?.userInfo?.id
+    //this.checkstate('showtime');
+    let url = `/api/v1/accounts/${id}/${list}`;
+    try {
+      let res = await this.mastodon.get(url);
+      console.log('get list', { headers: res.headers });
+      while (res?.status === 200) {
+        yield res.data;
+        let links = linkParser(res.headers.link);
+        console.log('get list', { headers: res.headers, links });
+        if (links?.next?.url) {
+          res = await this.mastodon.get(links.next.url.replace(/.*\/api\/v1/, '/api/v1'));
+          console.log('get list', { headers: res.headers, links });
+        }
+        else {
+          res = null
+        }
+
+      }
+    }
+    catch (err) {
+      console.log(err);
+    }
+  }
+
+
+
+  async add(list, id) {
+    this.checkstate('showtime');
+    let url = `/api/v1/accounts/${encodeURIComponent(id)}/${list}`;
+    try {
+      let res = await this.mastodon.post(url);
+      let { data } = res;
+      return data;
+    }
+    catch (err) {
+      console.log(err);
+      return false;
+    }
+  }
+
 
   
 };
