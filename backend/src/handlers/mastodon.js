@@ -121,7 +121,7 @@ async function callback(req, res) {
   }
 
   if (!state || !state === 'initial' || !host) {
-    return res.status(400).send('Bad session cookie!');
+    return res.status(400).send({ msg: 'Bad session cookie!', state, host, session: req.session.mastodon });
   }
 
   try {
@@ -219,6 +219,7 @@ try{
       if (remaining && resetTime) {
         let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf();
         let delay = timeUntil / remaining;
+        console.log('ratelimit', { remaining, timeUntil, delay });
         await new Promise(resolve => setTimeout(resolve, delay));
       }
       return res;
@@ -228,6 +229,8 @@ try{
       method, url: `${protocol}://${host}${url}`, body,
       headers: { "Authorization": `${token.token_type} ${token.access_token}` }
     });
+  result.headers.link && res.set(result.headers);
+
   res.status(result.status).json(result.data);
 
   }
