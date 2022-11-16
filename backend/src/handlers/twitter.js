@@ -1,30 +1,29 @@
 const { Client, auth } = require('twitter-api-sdk');
+
 const config = process.env;
 const uuid = require('uuid');
 const OAUTH_CONFIG = { client_id: config.TWITTER_CLIENT_KEY, client_secret: config.TWITTER_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
 
-console.log({ env: process.env, config });
-
-
 
 function authUrl(req, res, next) {
+  console.log(req.originalUrl, req.session.twitter);
+  let { state, url, codeVerifier } = req.session.twitter || {};
   try {
-    if (req.session.twitter && req.session.twitter.state === 'initial' && req.session.twitter.url && req.session.twitter.url.includes(req.session.twitter.codeVerifier)) {
-      let url = req.session.twitter.url;
-      res.json({ url });
+    if (url && url.includes(codeVerifier)) {
+      res.json({ url, state });
       return;
     }
 
 
     let authClient = new auth.OAuth2User(OAUTH_CONFIG);
     let client = new Client(authClient);
-    let [codeVerifier, state] = [uuid.v4(), 'initial'];
-    let url = authClient.generateAuthURL({
-      state: 'initial',
+    ([codeVerifier, state] = [codeVerifier || uuid.v4(), 'initial']);
+    url = authClient.generateAuthURL({
+      state,
       code_challenge_method: "plain",
       code_challenge: codeVerifier
     });
-
+    console.log('authUrl', { codeVerifier });
     req.session.twitter = { codeVerifier, state: 'initial', url };
     res.json({ url });
   }
@@ -37,18 +36,19 @@ function authUrl(req, res, next) {
 waiting = {};
 
 async function callback(req, res) {
+  console.log(req.originalUrl, req.session.twitter);
 
   const authClient = new auth.OAuth2User(OAUTH_CONFIG);
   const client = new Client(authClient);
 
   const { state, code } = req.query;
-  const { state: sessionState, codeVerifier } = req.session.twitter;
+  const { state: sessionState, codeVerifier } = req.session.twitter || {};
 
   if (!state || !sessionState || !code) {
     return res.status(400).send('You denied the app or your session expired!');
   }
-  if (state !== sessionState) {
-    return res.status(400).send('Stored tokens didnt match!');
+  if (state !== sessionState || !codeVerifier) {
+    return res.status(400).send(`Stored tokens didnt match! ${codeVerifier && codeVerifier.length}`);
   }
   // This is crap, it turns out that the only method that can set the private code_challenge property
   // is generateAuthURL, so we call it here to make things work. 
@@ -57,21 +57,27 @@ async function callback(req, res) {
     code_challenge_method: "plain",
     code_challenge: codeVerifier
   });
-
+  console.log('callback', { codeVerifier });
   authClient.requestAccessToken(code)
     .then(async ({ token }) => {
 
       req.session.twitter.token = token;
       req.session.twitter.state = 'online';
 
-      // Example request
-      const myUser = await client.users.findMyUser();
+
+      const myUser = await client.users.findMyUser({
+        'user.fields': [
+          'id', 'name', 'description', 'profile_image_url', 'username', 'verified'
+        ]
+      });
       req.session.twitter = {
         ...req.session.twitter,
         token,
-        state: 'online',
-        id: myUser.data.id
+        state: 'showtime',
+        id: myUser.data.id,
+        myUser: myUser.data
       };
+      console.log('after token fetch', req.session.twitter);
       waiting[codeVerifier] && waiting[codeVerifier].forEach(resolver => resolver(req.session.twitter));
       waiting[codeVerifier] = undefined;
       res.send('<script>window.close();</script>');
@@ -84,30 +90,89 @@ async function callback(req, res) {
 };
 
 
-async function lists(req, res) {
+async function checkLogin(req, res) {
+  let { state, codeVerifier, token, id, myUser } = req.session.twitter || {};
+  console.log(req.originalUrl, req.session.twitter);
 
+  let items;
+  try {
+
+
+    if (state === 'initial')
+      ({ state, codeVerifier, token, id, myUser } = req.session.twitter = await new Promise((resolve, reject) => {
+        waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
+
+        setTimeout(() => {
+          reject(new Error('timed out waiting for login'));
+        }, 30000);
+      }));
+
+    if (!(state && codeVerifier && token && id))
+      throw 'no state';
+
+    console.log('checkLogin', req.session.twitter);
+    if (state && codeVerifier && token && id && myUser) {
+      req.session.save(() => res.json(myUser));
+    }
+    else {
+      res.status(400).send('no user data');
+    }
+  }
+  catch (err) {
+    console.log('checkLogin', { err }, { state, codeVerifier, token, id, myUser });
+    res.status(400).send('something went wrong');
+  }
+
+}
+
+async function checkStatus(req, res) {
+  let { state, codeVerifier, token, id, myUser } = req.session.twitter || {};
+  if (state !== 'showtime') {
+    res.json({ state });
+  }
+  else {
+    try {
+      if (token) {
+        const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
+        const client = new Client(authClient);
+
+        const myUser = await client.users.findMyUser({
+          'user.fields': [
+            'description', 'profile_image_url', 'username', 'verified'
+          ]
+        });
+        console.log('twiiter, positive checkStatus', { state, user: myUser })
+        res.json({ state, user: myUser });
+      }
+      else {
+        throw new Error('no valid state');
+      }
+
+    }
+    catch (err) {
+      console.log(err);
+      state = 'initial';
+      req.session.twitter = { state };
+      res.json(state);
+    }
+  }
+
+
+}
+
+async function lists(req, res) {
   let items;
 
   try {
 
-    let { state, codeVerifier, token, id } = req.session.twitter;
+    let { state, codeVerifier, token, id } = req.session.twitter || {};
     const { list } = req.params;
 
-    console.log(req.session);  
-    if (state === 'initial')
-      ({ state, codeVerifier, token, id } = await new Promise((resolve, reject) => {
-        waiting[codeVerifier] = [...(waiting[codeVerifier] || []), resolve];
-        console.log('pushed', waiting);
-        setTimeout(() => {
-          resolve("foo");
-        }, 30000);
-      }));
 
-    console.log('have auth', { state, codeVerifier, token, id });
-    req.session.twitter = { state, codeVerifier, token, id };
+    if (!(state === 'showtime' && codeVerifier && token && id))
+      throw new Error('no/wrong state', {cause: 401});
 
-
-    const authClient = new auth.OAuth2Bearer(token.access_token );
+    const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
     const client = new Client(authClient);
     const listMap = {
       followers: client.users.usersIdFollowers,
@@ -117,37 +182,78 @@ async function lists(req, res) {
     };
     let listOperation = listMap[list];
 
-    console.log({ list });
     if (!listOperation) {
       res.status(400).send(`no handler for ${list}`);
       return;
     }
 
-    
-    items = listOperation(id, { max_results: 1000 }, { max_results: 1000 });
+
+    items = listOperation(id, {
+      'user.fields': [
+        'description', 'profile_image_url', 'username', 'verified'
+      ],
+      max_results: 1000
+    }, { max_results: 1000 });
     res.type('txt');
     for await (const page of items) {
-      console.log({ page });
-      res.write(JSON.stringify(page));
+      console.log('got page', { meta: page.meta });
+      page.data && page.data.forEach(data => res.write(JSON.stringify(data) + ','));
     }
     res.end();
+
   }
   catch (err) {
-    console.log('lists', err);
-    if (err.status == 429) {
-      res.write('], truncated: true}');
+    console.log({ err });
+    if (err.status === 429) {
       res.end();
     }
-    else {
-      return res.status(400).json(err);
+    else{
+      
+      return res.status(err.cause && parseInt(err.cause) === err.cause ? err.cause : 400).json(err);
     }
+
   }
 
 };
+
+
+async function logout(req, res) {
+
+  let { state, codeVerifier, token, id } = req.session.twitter || {};
+
+
+  if (!state || !state === 'showtime' || !token || !id) {
+    console.log('bad session cookie', { state, codeVerifier, token, id });
+    return res.status(400).send('Bad session cookie!');
+  }
+
+  try {
+    const authClient = new auth.OAuth2User({ ...OAUTH_CONFIG, token });
+    const client = new Client(authClient);
+
+    const response = await authClient.revokeAccessToken();
+
+    console.log('got data', { response });
+
+    req.session.twitter = { state: 'initial' };
+
+    res.json(true);
+
+  }
+
+  catch (error) {
+    console.log(error);
+    res.status(403).send(`Invalid verifier or access tokens!\n${error}`);
+  };
+
+}
 
 
 module.exports = {
   authUrl,
   callback,
   lists,
+  checkLogin,
+  checkStatus,
+  logout
 };

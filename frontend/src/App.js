@@ -1,97 +1,101 @@
-import { useState, useEffect, useRef } from 'react';
-import logo from './logo.svg';
-import axios from 'axios';
+import './App.css';
+import { useImmer } from "use-immer";
+
+import MainMenu, { paths as MenuPaths } from './components/MainMenu';
+
+import { makeStyles } from '@mui/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { AppBar, Toolbar, Typography, Box } from '@mui/material';
+import EastIcon from '@mui/icons-material/East';
+
+import {
+  HashRouter as Router,
+  Route,
+  Routes,
+  useLocation
+} from "react-router-dom";
+import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
+import MastodonBadge from './components/MastodonBadge';
+import TwitterBadge from './components/TwitterBadge';
+import DataDownload from './components/DataDownload';
+
+
+
+
+
 import './App.css';
 
-const api = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_HOST}/`,
-  withCredentials: true
-});
+const theme = createTheme({});
+const useStyles = makeStyles(() => ({
+  selectAll: {
+    position: "relative",
+    flexGrow: 1,
 
-axios.defaults.withCredentials = true;
+  },
+  toolbar: { ...theme.mixins.toolbar, height: 90 }
+}));
+
+
+
 
 function App() {
-  const lists = { 'followers': useState([]), 'following': useState([]), 'blocked': useState([]), 'muted': useState([]) };
-  const [tUrl, setUrl] = useState('');
-  const urlFetchedRef = useRef(0);
-  console.log('app entered', { date: new Date() });
+  const classes = useStyles();
 
-  async function twitterData() {
-
-    if (urlFetchedRef.current++ === 0) {
-      const decoder = new TextDecoder("utf-8");
-
-      let { data: { url } } = await api.get('/twitter/authUrl');
-      console.log({ url });
-      setUrl(url);
-      for (const [name, [thing, setter]] of Object.entries(lists)) {
-        let response = await fetch(`${process.env.REACT_APP_BACKEND_HOST}/twitter/${name}`, {
-          method: 'GET',
-          credentials: 'include'
-        });
-        // response.body is a ReadableStream
-        const reader = response.body.getReader();
-        let str = '';
-        let list = [];
-        for await (const chunk of readChunks(reader)) {
-          str += decoder.decode(chunk);
-          console.log(`received chunk of size ${chunk.length}`, { chunk, str });
-          try {
-            let obj = JSON.parse(str);
-            if (obj.data && obj.meta) {
-              list = list.concat(obj.data);
-              setter(list);
-              str = '';
-              console.log(`added ${obj.meta.result_count} entries`, thing);
-            }
-          }
-          catch (err) {
-            console.log(err, 'accumulating chinks');
-          }
-
-
-        }
-      }
-
-
-
-
-      // readChunks() reads from the provided reader and yields the results into an async iterable
-      function readChunks(reader) {
-        return {
-          async*[Symbol.asyncIterator]() {
-            let readResult = await reader.read();
-            while (!readResult.done) {
-              yield readResult.value;
-              readResult = await reader.read();
-            }
-          },
-        };
-
-      }
-
-    }
-  }
-  twitterData();
+  const [state, setState] = useImmer(initialState);
+  new SocialInterface(state, setState);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} height={50} width={50} className="App-logo" alt="logo" />
-        <a href={tUrl} target="_blank" rel="noreferrer"><button>Open IFRAME</button></a>
-        {Object.entries(lists).map(([name, [list, setter]]) =>
-        (list.length > 0 && <>
-          <h2>{name}</h2>
-          <ul>
-            {list.map(contact => (
-              (<li>{contact.name} <b>@{contact.username}</b></li>)
-            ))}
-          </ul>
-        </>)
-        )}
-      </header>
-    </div>
+    <SocialContext.Provider value={state}>
+      <ThemeProvider theme={theme}>
+        {console.log('app', { state })}
+
+          <Router>
+          <>
+            <Box sx={{ flexGrow: 1}}>
+              <AppBar position="fixed">
+                <Toolbar>
+                  <MainMenu />
+                  <MenuLocation />
+                  <TwitterBadge />
+                  {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon/> }
+                  <MastodonBadge />
+                  <Box sx={{ flexGrow: 1 }}/>
+                  <DataDownload data={state.lists} />
+                </Toolbar>
+              </AppBar>
+              <div className={classes.toolbar} />
+              </Box>
+            <Box sx={{ flexGrow: 1}}>
+              <Routes>
+                {Object.entries(MenuPaths).map(([key, value]) =>
+                  <Route exact={value.exact}
+                    path={key}
+                    key={key}
+                    element={value.element}
+                    children={value.children}
+                  />
+                )}
+              </Routes>
+              </Box>
+            </>
+          </Router>
+      </ThemeProvider>
+    </SocialContext.Provider>
+
   );
+
+  function MenuLocation() {
+    const location = useLocation();
+    return (<Typography variant="h6" className={classes.title}>
+      {MenuPaths[location.pathname]?.title}
+    </Typography>);
+
+  }
 }
+
+
+
+
+
 
 export default App;
