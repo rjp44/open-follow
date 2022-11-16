@@ -54,7 +54,7 @@ export default function About(props) {
       <div className={classes.toolbar} />
       <Paper className={classes.paper}>
         <Typography variant="body1">
-          Open Follow is a web application that allows you to migrate your social graph between social media applications. In this release, it supports just one migration, which is from twitter to mastodon.
+          openFollow is a web application that allows you to migrate your social graph between social media applications. In this release, it supports just one migration, which is from twitter to mastodon.
           Supporting migrations in the opposite direction, mastodon to twitter will be a further development, as will adding other applications.
         </Typography>
       </Paper>

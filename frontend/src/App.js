@@ -55,7 +55,7 @@ function App() {
               <AppBar position="fixed">
                 <Toolbar>
                   <MainMenu />
-                  <LocationHeader />
+                  <MenuLocation />
                   <TwitterBadge />
                   {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon/> }
                   <MastodonBadge />
@@ -84,7 +84,7 @@ function App() {
 
   );
 
-  function LocationHeader() {
+  function MenuLocation() {
     const location = useLocation();
     return (<Typography variant="h6" className={classes.title}>
       {MenuPaths[location.pathname]?.title}
