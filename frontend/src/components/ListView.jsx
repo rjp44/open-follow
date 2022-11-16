@@ -3,6 +3,7 @@ import React from 'react';
 import { Avatar } from '@mui/material';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -16,6 +17,7 @@ import excerptHtml from 'excerpt-html';
 
 import SelectAllControl from './SelectAllControl';
 import certaintyChips from './CertaintyChips';
+import { Progress } from './Progress';
 
 
 
@@ -95,17 +97,14 @@ export default function ListView(props) {
 
   console.log({ selectedCount });
 
-  let doSome = () => 1;
-
-
   return (<>
     {list.entries.length > 0 &&
       <List sx={{ width: '100%', bgcolor: 'background.paper', display: 'block', position: 'relative', maxHeight: props.listHeight, overflow: 'auto', '& ul': { padding: 0 } }}
         subheader={<li />}>
         <ListSubheader>
           <Toolbar>
-            <Typography variant="subheading">Found {count} {name}{count && `, ${matchCount} matches`} {list.xrefed !== 'done' && `(still looking ${list.xrefCount}/${count})`}</Typography>
-            <Button onClick={doSome}  disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</Button>
+            <Typography variant="subheading">Found {count} {name}{count && `, ${matchCount} matches`} {list.xrefed !== 'done' && <Progress a={list.xrefCount || 0}  b={count} />}</Typography>
+            <Button onClick={() => props.saveList(name)}  disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</Button>
             <SelectAllControl {...props} />
           </Toolbar>
 
@@ -124,7 +123,7 @@ export default function ListView(props) {
                 {contact.matches.map(m => (
                   <ListItem sx={{ pl: 10 }} key={`${contact.username}-${m.acct}`}
                     secondaryAction={
-                      <Checkbox
+                      !m.alreadyFollowing && <Checkbox
                         edge="end"
                         onChange={(event) => props.select({ listName: name, contact: contact.username, acct: m.acct }, event.target.checked)}
                         checked={!!m.selected}
@@ -134,7 +133,7 @@ export default function ListView(props) {
                   >
                     <ListItemAvatar><Avatar src={m.avatar} /></ListItemAvatar>
                     <ListItemText id={m.acct}>
-                      <Typography variant="subtitle1">{m.display_name}  {m.locked && <LockIcon />}</Typography>
+                      <Typography variant="subtitle1">{m.display_name}  {m.locked && <LockIcon />} {m.alreadyFollowing && <Chip size="small" label="currently following" />}</Typography>
                       {excerptHtml(m.note)}
                       <HandleWithCertainty handle={m.acct} certainty={m.certainty} />
                     </ListItemText>
