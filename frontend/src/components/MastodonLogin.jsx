@@ -57,8 +57,8 @@ export default function MastodonLogin(props) {
       <DialogActions>
         <LoadingButton variant="contained" href={state.mastodon.url} target="_blank"
           onClick={() => social.mastodonAuthenticate()}
-          loading={state === 'authenticating'}
-          disabled={state === 'showtime' || !(state?.mastodon?.url?.length > 0)}
+          loading={state.mastodon.state === 'authenticating'}
+          disabled={state.mastodon.state === 'showtime' || !(state?.mastodon?.url?.length > 0)}
         >Login to Mastodon
           <LoginIcon />
         </LoadingButton>
