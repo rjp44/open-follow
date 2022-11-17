@@ -59,7 +59,7 @@ export default function SelectAllControl(props) {
       >
         <MenuItem onClick={() => select(true)}>Select All</MenuItem>
         {certaintyChips.map((chip, index) => (
-          chip !== undefined && <MenuItem onClick={() => select((acct) => (acct.certainty.tier === index))}>Select All&nbsp;{chip}</MenuItem>
+          chip !== undefined && index !== 0 && <MenuItem key={`select-${index}`} onClick={() => select((acct) => (acct.certainty.tier === index))}>Select All&nbsp;{chip}</MenuItem>
         ))}
         <MenuItem onClick={() => select(false)}>Deselect All</MenuItem>
       </Menu>
