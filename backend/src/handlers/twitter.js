@@ -145,6 +145,7 @@ async function checkStatus(req, res) {
         res.json({ state, user: myUser });
       }
       else {
+        console.log('in showtime but no token');
         throw new Error('no valid state');
       }
 
@@ -152,7 +153,7 @@ async function checkStatus(req, res) {
     catch (err) {
       console.log(err);
       state = 'initial';
-      req.session.twitter = { state };
+      req.session.twitter.state = state ;
       res.json(state);
     }
   }
