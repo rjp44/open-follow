@@ -78,7 +78,7 @@ function HandleWithCertainty(props) {
       </Typography>
 
     </div>
-    {props.certainty?.tier &&
+    {(props.certainty?.tier != null) &&
       <div classNme={classes.certaintyChip}>{certaintyChips[props.certainty.tier]}
       </div>}
   </div>;
@@ -123,7 +123,7 @@ export default function ListView(props) {
                 {contact.matches.map(m => (
                   <ListItem sx={{ pl: 10 }} key={`${contact.username}-${m.acct}`}
                     secondaryAction={
-                      !m.alreadyFollowing && <Checkbox
+                      !m.alreadyFollowing && m.id && <Checkbox
                         edge="end"
                         onChange={(event) => props.select({ listName: name, contact: contact.username, acct: m.acct }, event.target.checked)}
                         checked={!!m.selected}

@@ -1,6 +1,6 @@
 import Chip from "@mui/material/Chip";
 const certaintyChips  = [
-  undefined, // no tier zero for now
+  <Chip label="not found" size="small" color="error" />,
   <Chip label="very strong" size="small" color="success" />,
   <Chip label="strong" size="small" color="success" />,
   <Chip label="weak" size="small" color="warning" />,
