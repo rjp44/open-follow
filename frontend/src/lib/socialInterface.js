@@ -200,6 +200,9 @@ export default class SocialInterface {
         }
 
         let accounts = (certainty.tier === 1) ? matches?.accounts : matches?.accounts?.filter(m => m.acct.replace(/@?([a-zA-Z0-9_-]+)@?.*/, '$1').toLowerCase() === entry.username.toLowerCase());
+        if (profileMatches.length && !accounts?.length) {
+          accounts = profileMatches.map(p => ({ acct: `@${p.user}@${p.host}`, orphan: true, display_name: 'Unknown', note: 'Valid looking Mastodon URL in twitter profile, but not found on Mastodon' }));
+        }
         console.log('match', { entry, accounts });
         accounts?.length && accounts.forEach(account => {
           !account.acct.includes('@') && (account.acct = `${account.acct}@${SocialInterface.state.globalState.mastodon.host}`);
