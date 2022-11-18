@@ -20,10 +20,17 @@ export default class SocialInterface {
       xrefCount: 0,
     }]))),
     uiState: 'twitterLogin',
-    status: { global: 0, task: 0, text: 'Logon to twitter to proceed' },
+    status: { global: { current: 0, steps: 8 }, task: { current: 0, steps: 0 }, text: 'Logon to twitter' },
     errors: []
   };
-
+/*
+  static statusSteps = [
+    'Getting twitter lists',
+    'Getting mastodon following',
+    'Searching Mastodon',
+    'Saving selected followers'
+ß  ]
+*/ 
   static state = {};
 
   constructor(globalState, globalImmer) {
@@ -61,6 +68,7 @@ export default class SocialInterface {
       if (newState !== 'showtime' && oldState !== newState) {
         this.setState((draft) => {
           draft.twitter.userInfo = undefined;
+          draft.status.global.current++;
         });
       }
       if (newState === 'initial' && oldState !== newState) {

@@ -1,15 +1,16 @@
 const { Client, auth } = require('twitter-api-sdk');
-
-const config = process.env;
+const config = require('config');
 const uuid = require('uuid');
-const OAUTH_CONFIG = { client_id: config.TWITTER_CLIENT_KEY, client_secret: config.TWITTER_CLIENT_SECRET, callback: config.CALLBACK_URL, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
+const OAUTH_CONFIG = { client_id: config.get('twitter.client_id'), client_secret: config.get('twitter.client_secret'), callback: config.get('twitter.callback_url'), scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read'] };
 
+now = () => (new Date().valueOf())
+staleTime = 30 * 1000;
 
 function authUrl(req, res, next) {
   console.log(req.originalUrl, req.session.twitter);
-  let { state, url, codeVerifier } = req.session.twitter || {};
+  let { state, url, codeVerifier, authTime } = req.session.twitter || {};
   try {
-    if (url && url.includes(codeVerifier)) {
+    if (url && url.includes(codeVerifier) && authTime && now() - authTime < staleTime) {
       res.json({ url, state });
       return;
     }
@@ -24,7 +25,7 @@ function authUrl(req, res, next) {
       code_challenge: codeVerifier
     });
     console.log('authUrl', { codeVerifier });
-    req.session.twitter = { codeVerifier, state: 'initial', url };
+    req.session.twitter = { codeVerifier, state: 'initial', url, authTime: now() };
     res.json({ url });
   }
   catch (err) {

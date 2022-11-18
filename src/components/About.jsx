@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import Slide from '@mui/material/Slide';
 import Link from '@mui/material/Link';
+import Kofi from './Kofi';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -21,7 +22,14 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
     flex: 1,
   },
-  toolbar: theme.mixins.toolbar
+  toolbar: theme.mixins.toolbar,
+  donateFrame: {
+    border: 'none',
+    width: '100%',
+    padding: '4px',
+    background: '#f9f9f9',
+    height: 712 
+  }
 }));
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -48,16 +56,18 @@ export default function About(props) {
           </IconButton>
           <Typography variant="h6" className={classes.title}>
             About
-            </Typography>
+          </Typography>
+          <Kofi id="robpickering" text="Donate" sx={{flexGrow: 1}} />
         </Toolbar>
       </AppBar>
       <div className={classes.toolbar} />
       <Paper className={classes.paper}>
+      
         <Typography variant="body1">
           openFollow is a web application that allows you to migrate your social graph between social media applications. In this release, it supports just one migration, which is from twitter to mastodon.
-          Supporting migrations in the opposite direction, mastodon to twitter will be a further development, as will adding other applications.
         </Typography>
       </Paper>
+      
       {false && <Paper display={false} className={classes.paper}>
         <Typography variant="h6">Source Code</Typography>
         <Typography variant="body1">

@@ -11,63 +11,64 @@ const useStyles = makeStyles((theme) => ({
   accountHeader: {
     width: '250px',
     display: 'flex',
-    fontSize: '15px',
+    position: 'relative',
+    fontSize: '13px',
     lineHeight: '18px',
     boxSizing: 'border-box',
     padding: '10px 0',
     margin: '10px 10px 10px',
-    border: '1px solid #282c37',
-    borderBottom: '2px solid #282c37',
-    background: '#fff',
+    borderBottom: '1px solid #282c37',
+    background: '#191b22',
     fontFamily: '"mastodon-font-sans-serif", sans-serif',
     fontWeight: 400,
-    color: 'rgb(15, 20, 25)',
+    color: '#fff',
     texRendering: 'optimizelegibility',
     fontFeatureSettings: "kern",
     borderRadius: '10px',
     textAlign: 'center',
   },
   avatar: {
-    width: '40px',
-    height: '40px',
+    width: '30px',
+    height: '30px',
     marginRight: '10px',
     marginLeft: '10px'
   },
   name: {
     flex: '1 1 auto',
-    width: 'calc(100% - 90px)',
+    color: '#d9e1e8',
+    width: 'calc(100% - 130px)',
     margin: 0,
     padding: 0,
     border: 0,
     font: 'inherit',
-    fontWeight: 700,
+    fontSize: '13px',
     verticalAlign: 'baseline',
   },
   username: {
     //display: 'block',
-    fontSize: '15px',
-    fontWeight: 400,
+    fontSize: '13px',
+    fontWeight: 700,
     textOverflow: 'ellipsis',
     overflow: 'hidden'
   },
 }));
 
-export default function TwitterBadge(props) {
+export default function MastodonBadge(props) {
   const classes = useStyles();
   const state = useContext(SocialContext);
   const social = new SocialInterface();
 
-  const user = state?.twitter?.userInfo;
+  const user = state.mastodon.userInfo;
 
   return (
     <>
       {user && <div className={classes.accountHeader}>
-        <div className={classes.avatar}><Avatar src={user.profile_image_url} className={classes.avatar} /></div>
+        <div className={classes.avatar}><Avatar src={user.avatar} className={classes.avatar} /></div>
         <div className={classes.name}>
           <div className={classes.username}>@{user.username}</div>
-          <div>{user.name}</div>
+          <div>@{state.mastodon.host}</div>
         </div>
-        <IconButton aria-label="logout" color="primary" onClick={() => social.twitterLogout()}><LogoutIcon /></IconButton>
+
       </div>
       }
     </>

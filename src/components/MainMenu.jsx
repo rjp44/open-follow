@@ -1,8 +1,8 @@
-import React from 'react';
+import {useState, useEffect} from 'react';
 
-import { IconButton, MenuItem, Menu} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import { Link as RouterLink } from 'react-router-dom';
+import { Button, IconButton, MenuItem, Menu} from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import OpenFollow from './OpenFollow';
 import About from './About';
@@ -14,10 +14,11 @@ export let paths = {
 
 
 export default function MainMenu() {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const navigate = useNavigate();
 
   const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
+    navigate('/about');
   };
 
   const handleClose = () => {
@@ -26,9 +27,9 @@ export default function MainMenu() {
 
   return (
     <div>
-      <IconButton aria-controls="main-menu" aria-haspopup="true" onClick={handleClick} edge="start" color="inherit" aria-label="menu">
-        <MenuIcon />
-      </IconButton>
+      <Button aria-controls="main-menu" variant="contained" aria-haspopup="true" onClick={handleClick} edge="start" aria-label="menu" endIcon={<InfoIcon />}>
+        About
+      </Button>
       <Menu
         id="simple-menu"
         anchorEl={anchorEl}

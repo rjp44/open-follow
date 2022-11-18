@@ -44,16 +44,16 @@ export default function TwitterLogin(props) {
         >Login to Twitter
         </LoadingButton>
       </DialogActions>
+      <DialogTitle>More information</DialogTitle>
       <DialogContent>
-      <DialogContentText>
-        <Typography variant="h5">More information</Typography>
+        <DialogContentText>
           We Request the following permissions:
+        </DialogContentText>
           <List>
             <ListItem><ListItemText secondary="necessary to be able to map your existing social graph on twitter to find contacts on Mastodon">read followers, following, mute and block lists</ListItemText></ListItem>
             <ListItem><ListItemText secondary="we don't to our knowledge use this, but it appears to be required by the API calls we make to list users as pinned tweets are returned as part of the user profile data and these calls fail with permission issues if we do nto request this. We don't use data from tweets, yours or anyone else's">read tweets that you can read</ListItemText></ListItem>
           </List>
-          We don't do any other operations using your twitter credentials other than reading your followers, following, muted, and blocked lists. We use these to cross reference and suggest Mastodon accounts to follow, and allow you to download your twitter data from this web application.
-        </DialogContentText>
+        <DialogContentText>We don't do any other operations using your twitter credentials other than reading your followers, following, muted, and blocked lists. We use these to cross reference and suggest Mastodon accounts to follow, and allow you to download your twitter data from this web application.</DialogContentText>
       </DialogContent>
     </Dialog>
   );

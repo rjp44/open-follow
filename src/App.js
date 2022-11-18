@@ -3,10 +3,11 @@ import { useImmer } from "use-immer";
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
-import { makeStyles } from '@mui/styles';
+import { makeStyles, propsToClassKey } from '@mui/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Box } from '@mui/material';
+import { AppBar, Button, Toolbar, Typography, Box } from '@mui/material';
 import EastIcon from '@mui/icons-material/East';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 import {
   HashRouter as Router,
@@ -18,12 +19,15 @@ import SocialInterface, { SocialContext, initialState } from './lib/socialInterf
 import MastodonBadge from './components/MastodonBadge';
 import TwitterBadge from './components/TwitterBadge';
 import DataDownload from './components/DataDownload';
+import Progress from './components/Progress';
+import Kofi from './components/Kofi';
 
 
 
 
 
 import './App.css';
+import Social from './lib/social';
 
 const theme = createTheme({});
 const useStyles = makeStyles(() => ({
@@ -35,37 +39,40 @@ const useStyles = makeStyles(() => ({
   toolbar: { ...theme.mixins.toolbar, height: 90 }
 }));
 
-
-
+function Logout(props) {
+  return <Button disabled={!props.mastodonState && !props.twitterState} onClick={props.logout} variant="contained" endIcon={<LogoutIcon />}>
+    Logout
+  </Button>;
+}
 
 function App() {
   const classes = useStyles();
-
   const [state, setState] = useImmer(initialState);
-  new SocialInterface(state, setState);
+  const social = new SocialInterface(state, setState);
 
   return (
     <SocialContext.Provider value={state}>
       <ThemeProvider theme={theme}>
         {console.log('app', { state })}
 
-          <Router>
+        <Router>
           <>
-            <Box sx={{ flexGrow: 1}}>
+            <Box sx={{ flexGrow: 1 }}>
               <AppBar position="fixed">
                 <Toolbar>
                   <MainMenu />
-                  <MenuLocation />
+                  <Logout logout={social.logout} twitterState={ state.twitter.state === 'showtime' } mastodonState={ state.mastodon.state === 'showtime' } />
                   <TwitterBadge />
-                  {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon/> }
+                  {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon />}
                   <MastodonBadge />
-                  <Box sx={{ flexGrow: 1 }}/>
+                  <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} />
+ 
                   <DataDownload data={state.lists} />
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />
-              </Box>
-            <Box sx={{ flexGrow: 1}}>
+            </Box>
+            <Box sx={{ flexGrow: 1 }}>
               <Routes>
                 {Object.entries(MenuPaths).map(([key, value]) =>
                   <Route exact={value.exact}
@@ -76,9 +83,9 @@ function App() {
                   />
                 )}
               </Routes>
-              </Box>
-            </>
-          </Router>
+            </Box>
+          </>
+        </Router>
       </ThemeProvider>
     </SocialContext.Provider>
 

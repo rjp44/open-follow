@@ -103,7 +103,7 @@ export default function ListView(props) {
         subheader={<li />}>
         <ListSubheader>
           <Toolbar>
-            <Typography variant="subheading">Found {count} {name}{count && `, ${matchCount} matches`} {list.xrefed !== 'done' && <Progress a={list.xrefCount || 0}  b={count} />}</Typography>
+            <Typography variant="subheading">Found {count} {name}{count && `, ${matchCount} matches`}</Typography>
             <Button onClick={() => props.saveList(name)}  disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</Button>
             <SelectAllControl {...props} />
           </Toolbar>

@@ -3,7 +3,6 @@ const axios = require('axios');
 const uuid = require('uuid');
 const BlobStorage = require('../lib/blobstorage');
 
-const OAUTH_CONFIG = { client_id: config.MASTODON_CLIENT_KEY, client_secret: config.MASTODON_CLIENT_SECRET, callback: config.REDIRECT_URI, scopes: ['follows.read', 'block.read', 'mute.read', 'users.read', 'tweet.read', 'offline.access'] };
 
 console.log({ env: process.env, config });
 
