@@ -317,8 +317,8 @@ module.exports = function (webpackEnv) {
       ),
       fallback: {
         "querystring": require.resolve("querystring-es3"),
-        "url": require.resolve("url/")
-
+        "url": require.resolve("url/"),
+        "buffer": require.resolve("buffer/")
       },
 
       // These are the reasonable defaults supported by the Node ecosystem.
