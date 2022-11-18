@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Avatar } from '@mui/material';
-import Button from '@mui/material/Button';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import List from '@mui/material/List';
@@ -17,7 +17,8 @@ import excerptHtml from 'excerpt-html';
 
 import SelectAllControl from './SelectAllControl';
 import certaintyChips from './CertaintyChips';
-import { Progress } from './Progress';
+import Progress  from './Progress';
+import { state } from '../lib/socialInterface';
 
 
 
@@ -89,29 +90,29 @@ function HandleWithCertainty(props) {
 
 export default function ListView(props) {
 
-  const { list, name } = props;
+  const { list, name, status, saving } = props;
 
   let count = list && list?.entries?.length;
   let matchCount = list.entries.filter(c => c.matches).reduce((o, contact) => (o + contact?.matches?.length), 0);
   let selectedCount = list.entries.filter(c => c.matches).reduce((o, contact) => (o + contact?.matches?.filter(m => m.selected)?.length), 0);
 
-  console.log({ selectedCount });
+  
 
   return (<>
     {list.entries.length > 0 &&
       <List sx={{ width: '100%', bgcolor: 'background.paper', display: 'block', position: 'relative', maxHeight: props.listHeight, overflow: 'auto', '& ul': { padding: 0 } }}
         subheader={<li />}>
-        <ListSubheader>
+        <ListSubheader key="subheader">
           <Toolbar>
-            <Typography variant="subheading">Found {count} {name}{count && `, ${matchCount} matches`}</Typography>
-            <Button onClick={() => props.saveList(name)}  disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</Button>
+            <Progress status={status} />
+            <LoadingButton onClick={() => props.saveList(name)} loading={saving} loadingIndicator={`Saving ${props.saving}`} disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</LoadingButton>
             <SelectAllControl {...props} />
           </Toolbar>
 
         </ListSubheader>
         {list.entries.filter(c => c.matches).map(contact => (
           <>
-            <ListItem sx={{ bgcolor: '#eeeeee' }} id={contact.username} >
+            <ListItem sx={{ bgcolor: '#eeeeee' }} id={contact.username} key={contact.username}>
               <ListItemAvatar ><Avatar src={contact.profile_image_url} /></ListItemAvatar>
               <ListItemText secondary={`@${contact.username}`} >
                 <Typography variant="subtitle1">{contact.name}</Typography>{contact.description}

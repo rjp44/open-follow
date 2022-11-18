@@ -4,7 +4,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
-import Typography from '@mui/material/Typography';
+
 import List from '@mui/material/List';
 import ListItemText from '@mui/material/ListItemText';
 import ListItem from '@mui/material/ListItem';
@@ -20,7 +20,7 @@ import SocialInterface, { SocialContext } from '../lib/socialInterface';
 export default function MastodonLogin(props) {
   const social = new SocialInterface();
   const state = useContext(SocialContext);
-  console.log('MastodonLogin', { state });
+  
 
   return (
     <Dialog open={props.open}>

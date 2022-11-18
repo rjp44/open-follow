@@ -29,7 +29,7 @@ export default class Mastodon extends Social {
       if (remaining && resetTime) {
         let timeUntil = (new Date(resetTime)).valueOf() - (new Date()).valueOf;
         let delay = timeUntil / remaining;
-        console.log('mastodon API', { remaining, timeUntil, delay });
+        
         await new Promise((reject, resolve) => setTimeout(resolve, delay));
       }
       return res;
@@ -59,7 +59,7 @@ export default class Mastodon extends Social {
       return '';
     this.host = host;
     let { data: { url } } = await this.api.get(`/authUrl?server=${host}`);
-    console.log({ url });
+    
     callback && callback(url);
     return url;
   }
@@ -89,7 +89,7 @@ export default class Mastodon extends Social {
       return data;
     }
     catch (err) {
-      console.log(err);
+      
       return false;
     }
   }
@@ -101,14 +101,14 @@ export default class Mastodon extends Social {
     let url = `/api/v1/accounts/${id}/${list}`;
     try {
       let res = await this.mastodon.get(url);
-      console.log('get list', { headers: res.headers });
+      
       while (res?.status === 200) {
         yield res.data;
         let links = linkParser(res.headers.link);
-        console.log('get list', { headers: res.headers, links });
+        
         if (links?.next?.url) {
           res = await this.mastodon.get(links.next.url.replace(/.*\/api\/v1/, '/api/v1'));
-          console.log('get list', { headers: res.headers, links });
+          
         }
         else {
           res = null
@@ -117,7 +117,7 @@ export default class Mastodon extends Social {
       }
     }
     catch (err) {
-      console.log(err);
+      
     }
   }
 
@@ -132,7 +132,7 @@ export default class Mastodon extends Social {
       return data;
     }
     catch (err) {
-      console.log(err);
+      
       return false;
     }
   }

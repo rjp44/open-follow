@@ -7,7 +7,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 
-import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItemText from '@mui/material/ListItemText';
 import ListItem from '@mui/material/ListItem';
@@ -21,7 +20,7 @@ export default function TwitterLogin(props) {
 
   const social = new SocialInterface();
   const state = useContext(SocialContext);
-  console.log('TwitterLogin', { state });
+  
 
   return (
 

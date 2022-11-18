@@ -1,9 +1,8 @@
 import { useContext } from 'react';
 import { makeStyles } from '@mui/styles';
-import LogoutIcon from '@mui/icons-material/Logout';
-import { IconButton } from '@mui/material';
+
 import { Avatar } from '@mui/material';
-import SocialInterface, { SocialContext } from '../lib/socialInterface';
+import { SocialContext } from '../lib/socialInterface';
 
 
 
@@ -55,7 +54,6 @@ const useStyles = makeStyles((theme) => ({
 export default function TwitterBadge(props) {
   const classes = useStyles();
   const state = useContext(SocialContext);
-  const social = new SocialInterface();
 
   const user = state?.twitter?.userInfo;
 

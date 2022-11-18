@@ -2,8 +2,6 @@ import { createContext } from 'react';
 import Twitter from './twitter';
 import Mastodon from './mastodon';
 
-
-
 export default class SocialInterface {
 
   static init = false;
@@ -23,14 +21,10 @@ export default class SocialInterface {
     status: { global: { current: 0, steps: 8 }, task: { current: 0, steps: 0 }, text: 'Logon to twitter' },
     errors: []
   };
-/*
-  static statusSteps = [
-    'Getting twitter lists',
-    'Getting mastodon following',
-    'Searching Mastodon',
-    'Saving selected followers'
-ß  ]
-*/ 
+
+  static twitterLoginDone = new Promise((resolve) => SocialInterface.twitterLoginResolve = resolve);
+  static mastodonLoginDone = new Promise((resolve) => SocialInterface.mastodonLoginResolve = resolve);
+
   static state = {};
 
   constructor(globalState, globalImmer) {
@@ -52,13 +46,13 @@ export default class SocialInterface {
           () => this.mastodon.start()
         );
         SocialInterface.init = true;
+        new Promise((resolve) => SocialInterface.twitterLogin = resolve);
+        new Promise((resolve) => SocialInterface.mastodonLogin = resolve);
       }
+
     }
   }
 
-  async twitterLogout() {
-    return this.twitter.logout();
-  }
   async twitterAuthenticate() {
     await this.twitter.startLogin();
   }
@@ -77,6 +71,9 @@ export default class SocialInterface {
           draft.twitter.state = newState;
           draft.twitter.url = url;
         });
+        if (oldState === 'showtime') {
+          SocialInterface.twitterLoginDone = new Promise((resolve) => SocialInterface.twitterLoginResolve = resolve);
+        }
       }
       if (newState === 'authenticating' && oldState !== newState) {
         this.setState((draft) => {
@@ -90,42 +87,76 @@ export default class SocialInterface {
           draft.twitter.userInfo = userInfo;
           draft.uiState = (SocialInterface.state.globalState.mastodon.state !== 'showtime') ? 'mastodonLogin' : 'main';
         });
+        SocialInterface.twitterLoginResolve(true);
 
-
-        for (const [name, list] of Object.entries(SocialInterface.state.globalState.lists)) {
-          console.log('processing', { name, list });
-          if (list.loaded !== 'not-started') {
-            break;
-          }
-          try {
-            this.setState((draft) => { draft.lists[name] = { loaded: 'loading', entries: [] }; });
-            for await (const slice of this.twitter.getList(name)) {
-              console.log('got slice', { length: slice.length });
-              this.setState((draft) => { draft.lists[name].entries.push(...slice); });
-            }
-
-            this.setState((draft) => { draft.lists[name].loaded = 'done'; });
-          }
-          catch (err) {
-            this.setState((draft) => {
-              draft.lists[name].loaded = 'not-started';
-            });
-          }
-        }
       }
-
-
     }
     catch (err) {
-      console.log(err);
+      
       this.setState((draft) => { draft.errors.push(err); });
     }
 
 
   }
 
+  async mainWaitLoop() {
+    
+    this.setState((draft) => {
+      draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists) }, text: 'Waiting for twitter login' };
+    });
+    while (Object.entries(SocialInterface.state.globalState.lists).reduce((ag, [, entry]) => (ag || entry.loaded !== 'done'), false)) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await SocialInterface.twitterLoginDone;
+      
+      for (const [name, list] of Object.entries(SocialInterface.state.globalState.lists)) {
+        
+        if (list.loaded !== 'not-started' && list.loaded !== 'failed') {
+          continue;
+        }
+        try {
+          this.setState((draft) => {
+            draft.lists[name] = { loaded: 'loading', entries: [] };
+            draft.status.task.current++; 
+            draft.status.text = `fetching ${name} list`;
+          });
+          for await (const slice of this.twitter.getList(name)) {
+            
+            this.setState((draft) => { draft.lists[name].entries.push(...slice); });
+          }
+          this.setState((draft) => { draft.lists[name].loaded = 'done'; });
+        }
+        catch (err) {
+          this.setState((draft) => {
+            draft.lists[name].loaded = 'failed';
+            draft.lists[name].loadedCount = draft.lists[name].entries.length;
+          });
+        }
+      }
+    }
+
+    this.setState((draft) => {
+      draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 0}, text: 'Waiting for mastodon login' };
+    });
+    await SocialInterface.mastodonLoginDone;
+    
+    this.setState((draft) => {
+      draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 100 }, text: 'getting mastodon following' };
+    });
+    for await (const slice of SocialInterface.mastodon.getList('following')) {
+      
+      this.setState((draft) => {
+        draft.mastodon.following.push(...slice);
+        draft.status.task.current++;
+      });
+    }
+    while (!await this.xrefLists(Object.entries(SocialInterface.state.globalState.lists).reduce((c, [, list]) => (c + list?.entries?.length), 0))) {
+      
+    }
+  }
+
+
   async #mastodonTransition(newState, oldState) {
-    console.log('mastodon transition', { newState, oldState });
+    
     try {
       if (newState !== 'showtime' && oldState !== newState) {
         this.setState((draft) => {
@@ -140,6 +171,9 @@ export default class SocialInterface {
             draft.mastodon.state = newState;
             draft.mastodon.servers = servers;
           });
+          if (oldState === 'showtime') {
+            new Promise((resolve) => SocialInterface.doneMastodonFetch = resolve);
+          }
         }
       }
       else if (newState === 'showtime' && oldState !== newState) {
@@ -151,15 +185,7 @@ export default class SocialInterface {
           draft.mastodon.following = [];
           draft.uiState = (SocialInterface.state.globalState.twitter.state !== 'showtime') ? 'twitterLogin' : 'main';
         });
-        for await (const slice of SocialInterface.mastodon.getList('following')) {
-          console.log('following', { slice });
-          this.setState((draft) => {
-            draft.mastodon.following.push(...slice);
-          });
-        }
-        while (!await this.xrefLists()) {
-          console.log('looping xref');
-        }
+        SocialInterface.mastodonLoginResolve(true);
       }
       else if (oldState !== newState) {
         this.setState((draft) => {
@@ -168,14 +194,17 @@ export default class SocialInterface {
       }
     }
     catch (err) {
-      console.log(err);
+      
       this.setState((draft) => { draft.errors.push(err); });
     }
   }
 
-  async xrefLists() {
+  async xrefLists(count) {
+    this.setState((draft) => {
+      draft.status = { global: { current: 2, steps: 3 }, task: { current: 0, steps: count }, text: 'Searching for accounts ' };
+    });
     for (const [name, list] of Object.entries(SocialInterface.state.globalState.lists)) {
-      console.log('processing', { name, list });
+      
       let skip = 0;
       if (list.xrefed && list.xrefed !== 'not-started') {
         if (list.xrefed && list.xrefed === 'failed') {
@@ -191,6 +220,10 @@ export default class SocialInterface {
           this.setState((draft) => { draft.lists[name].xrefed = 'failed'; });
           break;
         }
+        this.setState((draft) => {
+          draft.status.text = `Searching for ${name} ${index}/${list.entries.length}`;
+          draft.status.task.current ++;
+        });
         if (index < skip) {
           continue;
         }
@@ -198,7 +231,7 @@ export default class SocialInterface {
           (SocialInterface.state.globalState.mastodon.servers.find(s => (s.toLowerCase() === p.host))));
         let searchString = profileMatches.length ? `@${profileMatches[0].user}@${profileMatches[0].host}` : `@${entry.username}@`;
         let certainty = profileMatches.length ? { desc: 'found via link in twitter bio', tier: 1 } : { desc: 'match for twitter handle', tier: 3 };
-        console.log('finding', entry.name, { profileMatches, searchString, certainty });
+        
         let matches;
         try {
           matches = await this.mastodon.search(searchString, 'accounts');
@@ -220,7 +253,7 @@ export default class SocialInterface {
           certainty = { desc: 'link in twitter handle not found', tier: 0 };
 
         }
-        console.log('match', { entry, accounts });
+        
         accounts?.length && accounts.forEach(account => {
           !account.acct.includes('@') && (account.acct = `${account.acct}@${SocialInterface.state.globalState.mastodon.host}`);
           if (SocialInterface.state.globalState.mastodon.following.find(f => f.id === account.id)) {
@@ -231,7 +264,7 @@ export default class SocialInterface {
             account.certainty = { desc: 'match for twitter handle & exact name match', tier: 2 };
           }
         });
-        console.log('index', { index });
+        
         this.setState((draft) => {
           accounts?.length && (draft.lists[name].entries[index].matches = accounts);
           draft.lists[name].xrefCount = parseInt(index) + 1;
@@ -239,6 +272,9 @@ export default class SocialInterface {
       }
       this.setState((draft) => { draft.lists[name].xrefed = 'done'; });
     }
+    this.setState((draft) => {
+      draft.status = { global: { current: 3, steps: 3 }, task: { current: 1, steps: 1 }, text: `fetch complete ${count} ids processed` };
+    });
     return true;
   }
 
@@ -256,11 +292,11 @@ export default class SocialInterface {
 
 
   select({ listName, contact, acct, alreadyFollowing }, state) {
-    console.log('selectAll', { listName, contact, acct, state });
+    
     SocialInterface.setState((draft) => {
       draft.lists[listName].entries.forEach(entry => {
         (!contact || contact === entry.username) && entry.matches && entry.matches.forEach(match => {
-          console.log(`setting`, { match, state });
+          
           if (!acct || acct === match.acct) {
             if (state instanceof Function) {
               state(match) && (match.selected = true);
@@ -276,7 +312,7 @@ export default class SocialInterface {
   }
 
   async saveList(listName) {
-    console.log('saveList', { listName });
+    
     const target = {
       followers: 'follow',
       following: 'follow',
@@ -284,21 +320,32 @@ export default class SocialInterface {
       muted: 'mute'
     };
     let list = SocialInterface.state.globalState.lists[listName];
+    SocialInterface.setState((draft) => {
+      draft.saving = list.entries.reduce((c, contact) => (c + (contact?.matches?.filter(m => m.selected).length || 0)), 0);
+    });
     for (let contactIndex in list.entries) {
       for (let matchIndex in list.entries[contactIndex].matches) {
         let match = list.entries[contactIndex].matches[matchIndex];
         if (match.selected) {
           let result = await SocialInterface.mastodon.add(target[listName], match.id);
-          console.log({ result });
           this.select({ listName, contact: list.entries[contactIndex].username, acct: match.acct, alreadyFollowing: true }, false);
+          SocialInterface.setState((draft) => {
+            draft.saving--;
+          });
         }
       }
     }
+    SocialInterface.setState((draft) => {
+      draft.saving = 0;
+    });
   }
 
-  async mastodonLogout() {
-    return this.mastodon.logout();
+
+  async logout() {
+    await SocialInterface.twitter.logout();
+    await SocialInterface.mastodon.logout();
   }
+
   async mastodonAuthenticate() {
     await this.mastodon.startLogin();
   }

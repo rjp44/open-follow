@@ -3,23 +3,20 @@ import { useImmer } from "use-immer";
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
-import { makeStyles, propsToClassKey } from '@mui/styles';
+import { makeStyles } from '@mui/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Button, Toolbar, Typography, Box } from '@mui/material';
+import { AppBar, Button, Toolbar, Box } from '@mui/material';
 import EastIcon from '@mui/icons-material/East';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 import {
   HashRouter as Router,
   Route,
-  Routes,
-  useLocation
-} from "react-router-dom";
+  Routes} from "react-router-dom";
 import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
 import MastodonBadge from './components/MastodonBadge';
 import TwitterBadge from './components/TwitterBadge';
 import DataDownload from './components/DataDownload';
-import Progress from './components/Progress';
 import Kofi from './components/Kofi';
 
 
@@ -27,7 +24,7 @@ import Kofi from './components/Kofi';
 
 
 import './App.css';
-import Social from './lib/social';
+import { useEffect } from 'react';
 
 const theme = createTheme({});
 const useStyles = makeStyles(() => ({
@@ -49,12 +46,13 @@ function App() {
   const classes = useStyles();
   const [state, setState] = useImmer(initialState);
   const social = new SocialInterface(state, setState);
+  useEffect(() => {
+    social.mainWaitLoop();
+  }, [])
 
   return (
     <SocialContext.Provider value={state}>
       <ThemeProvider theme={theme}>
-        {console.log('app', { state })}
-
         <Router>
           <>
             <Box sx={{ flexGrow: 1 }}>
@@ -66,8 +64,7 @@ function App() {
                   {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon />}
                   <MastodonBadge />
                   <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} />
- 
-                  <DataDownload data={state.lists} />
+                   <DataDownload data={state.lists} />
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />
@@ -91,13 +88,6 @@ function App() {
 
   );
 
-  function MenuLocation() {
-    const location = useLocation();
-    return (<Typography variant="h6" className={classes.title}>
-      {MenuPaths[location.pathname]?.title}
-    </Typography>);
-
-  }
 }
 
 

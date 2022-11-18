@@ -1,7 +1,9 @@
-import KofiButton  from "kofi-button";
+import KofiButton from "kofi-button";
+import { Box } from "@mui/system";
 
 export default function Kofi(props) {
 
-  return <div class={{flexGrow: 1}}><KofiButton kofiID={props.id} title={props.text} /></div>
-
+  return <Box {...props}>
+  <KofiButton kofiID={props.id} title={props.text} />
+  </Box>;
 }

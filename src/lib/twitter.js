@@ -42,25 +42,26 @@ export default class Twitter extends Social {
       let read;
       while ((read = await reader.read()) && !read.done) {
         str += decoder.decode(read.value);
-        console.log(`received chunk of size ${read.value.length} buffer len ${str.length}`, { value: read.value, str });
+        
 
         let [exp, remnant] = findLastLineEnd(str);
         let obj = JSON.parse('[' + exp + ']');
         str = remnant;
-        console.log('got obj', { obj });
+        
         yield obj;
 
 
       }
     }
     catch (err) {
-      console.log({ err }, `fetch error (probably)`);
+      
       try {
         this.logout();
       }
       catch (err) {
         // we really don;t care by the time we get here
       }
+      throw new Error('failed to fetch list');
     }
 
     function findLastLineEnd(str) {

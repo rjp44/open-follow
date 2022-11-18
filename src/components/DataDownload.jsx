@@ -11,7 +11,7 @@ export default function DataDownload(props) {
     if (!dataUrl) {
       setLoading(true);
       let blob = new Blob([JSON.stringify(props.data, null, 2)], { type: "application/json" });
-      console.log('download', props.data, { blob });
+      
       setDataUrl(URL.createObjectURL(blob));
       setLoading(false);
     }

@@ -25,7 +25,7 @@ export default function SelectAllControl(props) {
 
   let open = Boolean(anchorEl);
 
-  console.log({ open, anchorEl });
+  
 
   return (
 

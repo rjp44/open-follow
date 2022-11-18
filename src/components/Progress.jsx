@@ -31,10 +31,11 @@ function Spinner(props) {
 
 export default function Progress(props) {
   let percent = {};
-  ['global', 'task'].forEach(tier => (percent[tier] = Math.round(props?.status?.[tier]?.done / props?.status?.[tier]?.steps * 100)));
+  
+  ['global', 'task'].forEach(tier => (percent[tier] = Math.round(props?.status?.[tier]?.current / props?.status?.[tier]?.steps * 100)));
   return <Box sx={{flexGrow: 1}}>
     <div><Typography variant="subheading">{props.status.text}</Typography></div>
-    <div>{!isNaN(percent.global) && !isNaN(percent.task) && <LinearProgress variant="buffer" value={percent.global} buffer={percent.task} />}</div>
+    <div>{!isNaN(percent.global) && !isNaN(percent.task) && <LinearProgress variant="buffer" value={percent.global} valueBuffer={percent.task} />}</div>
   </Box>
 
 }

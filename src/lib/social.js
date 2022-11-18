@@ -8,7 +8,7 @@ export default class Social {
    *
    */
   constructor({ onStateChange } = {}) {
-    console.log('constructor', { onStateChange });
+    
     this.onStateChange = async (state, lastState) => (onStateChange && onStateChange(state, lastState));
   }
 
@@ -51,7 +51,7 @@ export default class Social {
     try {
       let { data } = await this.api.get("/checkLogin");
       this.state = "showtime";
-      console.log('got login', { data });
+      
       return this.state;
     } catch (err) {
       this.state = "initial";
@@ -69,7 +69,7 @@ export default class Social {
       data: { url },
     } = await this.api.get("/authUrl");
     this.state = 'initial';
-    console.log({ url });
+    
     callback && callback(url);
     return url;
   }
@@ -83,7 +83,7 @@ export default class Social {
     let {
       data: info 
     } = await this.api.get("/userInfo");
-    console.log({ info });
+    
     callback && callback(info);
     return info;
   }
@@ -92,7 +92,7 @@ export default class Social {
 
   async checkStatus() {
     let { data } = await this.api.get(`/checkStatus`);
-    console.log('checkStatus', { data });
+    
     this.state = data.state || 'initial';
     return data.state;
   }
@@ -105,11 +105,11 @@ export default class Social {
     this.checkstate("showtime");
     try {
       let { data } = await this.api.get(`/logout`);
-      console.log({ data });
+      
       callback && callback(data);
     }
     catch (err) {
-      console.log({ err }, 'on logout');
+      
     }
     finally {
       this.state = "initial";
