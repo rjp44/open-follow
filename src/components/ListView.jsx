@@ -79,7 +79,7 @@ function HandleWithCertainty(props) {
 
     </div>
     {(props.certainty?.tier != null) &&
-      <div classNme={classes.certaintyChip}>{certaintyChips[props.certainty.tier]}
+      <div className={classes.certaintyChip}>{certaintyChips[props.certainty.tier]}
       </div>}
   </div>;
 
