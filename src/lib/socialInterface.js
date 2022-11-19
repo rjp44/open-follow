@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import Twitter from './twitter';
 import Mastodon from './mastodon';
+import Session from './session';
 
 export default class SocialInterface {
 
@@ -41,13 +42,7 @@ export default class SocialInterface {
         SocialInterface.twitter = new Twitter({ onStateChange: (...args) => this.#twitterTransition(...args) });
         SocialInterface.mastodon = new Mastodon({ onStateChange: (...args) => this.#mastodonTransition(...args) });
         Object.assign(this, { ...Object.fromEntries(Object.entries(SocialInterface)) });
-        // important to chain these otherwise the backed creates two different session cookies and things go horribly wrong
-        this.twitter.start().then(
-          () => this.mastodon.start()
-        );
         SocialInterface.init = true;
-        new Promise((resolve) => SocialInterface.twitterLogin = resolve);
-        new Promise((resolve) => SocialInterface.mastodonLogin = resolve);
       }
 
     }
@@ -100,6 +95,13 @@ export default class SocialInterface {
   }
 
   async mainWaitLoop() {
+
+    let session = new Session();
+    await session.initSession();
+    await this.twitter.start();
+    await this.mastodon.start();
+    new Promise((resolve) => SocialInterface.twitterLogin = resolve);
+    new Promise((resolve) => SocialInterface.mastodonLogin = resolve);
     
     this.setState((draft) => {
       draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists) }, text: 'Waiting for twitter login' };
