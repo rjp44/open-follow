@@ -57,7 +57,6 @@ export default function About(props) {
           <Typography variant="h6" className={classes.title}>
             About
           </Typography>
-          <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} />
         </Toolbar>
       </AppBar>
       <div className={classes.toolbar} />
@@ -127,15 +126,14 @@ export default function About(props) {
 
       </Paper>
       <Paper className={classes.paper}>
-        <Typography variant="h6">Contact</Typography>
+        <Typography variant="h6">Contact &amp; Credits</Typography>
         <Typography variant="body1">
-          The author is <Link href="https://infosec.exchange/@robx0a" target="_blank" rel="noopener">@robx0a@infosec.exchange</Link>.
+          The author is <Link href="https://infosec.exchange/@robx0a" target="_blank" rel="noopener">@robx0a@infosec.exchange</Link>. Appreciation by way of a contribution to hosting costs very much accepted:
         </Typography>
-        <Typography variant="body1">
-          My intention was and is to Open Source the code for this implementation at some stage. It really needs a good tidy up and some major areas re-factored from what I learned about the APIs before I will kill any respect that anyone has for me by doing that right now. It has been hacked together far too quickly and I need sleep first.
-        </Typography>
-        <Typography variant="body1">
-          Once that happens, there will be a github issues list an I will probably start accepting PRs.
+        <Kofi id="robpickering" text="Donate" />
+        <Typography>Source code: <GitHubIcon /><Link href="https://github.com/rjp44/open-follow/" target="_blank" rel="noopener">rjp44/open-follow</Link></Typography>
+        <Typography>
+          I know it is rough. It really needs a good tidy up and some major areas re-factored from what I learned about the APIs but I need sleep and getting it out seems urgent.
         </Typography>
         <Typography variant="body1">
           Other credits: Without irony, some of the icons used come from the Twemoji set licenced by Twitter under <Link href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</Link>
