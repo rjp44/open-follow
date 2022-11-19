@@ -74,17 +74,17 @@ export default function About(props) {
           </Typography>
           <Typography variant="h6">Performance and rate limits</Typography>
           <Typography variant="body1">
-            Twitter very aggressively rate limit their API access to around 15 requests per 15 minutes. We work around that by making as small a number of very large page size requests as we can, but if you have 10k plus followers or following, at the very best it will take ages to pull all of your contact, and most likely the app will bomb out when we get responses we haven't been able to test for.
+            Twitter very aggressively rate limit their API access to around 15 requests per 15 minutes per logged in user (that is why we have to go to the trouble of making people OAuth to pull data on their behalf). We work around that by making as small a number of very large page size requests as we can, but if you have 10k plus followers or following, at the very best it will take ages to pull all of your contact, and most likely the app will bomb out when we get responses we haven't been able to test for.
           </Typography>
           <Typography>
             Of course if anyone wants to loan me a huge twitter account to play with, I promise I will take very good care of it...
           </Typography>
           <Typography>
-            On Mastodon, we run API requests against your own home server. We try to play nicely and stay well under the API rate limits the servers declare as the last thing anyone trying to run a Mastodon server running right now needs is this application hammering them. That means that cross referencing your twitter data takes a while, but just chill out and let the app do it's stuff. The status updates under the lists tab should update
-            to show you it is still alive.
+            On Mastodon, we run API requests against your own home server. We try to play nicely and stay well under the API rate limits the servers declare. The very last thing anyone trying to run a Mastodon server running right now needs is this application hammering them. That means that cross referencing your twitter data takes a while, but just chill out and let the app do it's stuff. The status updates under the lists tab should update
+          to show you it is still alive. Don't let your PC go to sleep as that suspends network fetches.
         </Typography>
         <Typography variant="h6">Saving data</Typography>
-        <Typography> Any time after the initial twitter data load has happened, you can grab a JSON dump of your twitter relationships using the Download Button top right. As this starts to be augmented with data from Mastodon that will also be included in the dump, but you don't need to wait if you are worried bout twitter going down <b><i>now</i></b>. The UI updates dynamically as data is loaded, but you
+        <Typography> Any time after the initial twitter data load has happened, you can grab a JSON dump of your twitter relationships using the Download Button top right. As this starts to be augmented with data from Mastodon that will also be included in the dump, but you don't need to wait if you are worried about twitter going down <b><i>now</i></b>. The UI updates dynamically as data is loaded, but you
         can start selecting follower/followees that you want to follow on your Mastodon instance as soon as the UI starts to populate. It may even be a good thing to add following relationships on Mastodon in batches.</Typography>
 
       </Paper>
@@ -136,7 +136,10 @@ export default function About(props) {
         </Typography>
         <Typography variant="body1">
           Once that happens, there will be a github issues list an I will probably start accepting PRs.
-          </Typography>
+        </Typography>
+        <Typography variant="body1">
+          Other credits: Without irony, some of the icons used come from the Twemoji set licenced by Twitter under <Link href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</Link>
+        </Typography>
       </Paper>
     </Dialog>
 
