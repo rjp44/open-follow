@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { HashLink as Link } from 'react-router-hash-link';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import DialogActions from '@mui/material/DialogActions';
@@ -45,6 +46,9 @@ export default function TwitterLogin(props) {
       </DialogActions>
       <DialogTitle>More information</DialogTitle>
       <DialogContent>
+        <DialogContentText>
+          Although we are only reading public information from twitter, we have to pull it using API calls authenticated against your account as we can only make one anonymous request per minute outside of this. See our <Link to="/about#privacy">privacy policy</Link> for details about how we protect your data.
+          </DialogContentText>
         <DialogContentText>
           We Request the following permissions:
         </DialogContentText>

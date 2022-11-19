@@ -88,7 +88,7 @@ export default function About(props) {
         can start selecting follower/followees that you want to follow on your Mastodon instance as soon as the UI starts to populate. It may even be a good thing to add following relationships on Mastodon in batches.</Typography>
 
       </Paper>
-      <Paper className={classes.paper}>
+      <Paper className={classes.paper} id="privacy">
         <Typography variant="h6">Privacy</Typography>
         <Typography variant="body1">
           To the greatest possible extent, this application does all of it's work client side.</Typography>
@@ -121,7 +121,7 @@ export default function About(props) {
 
           If you believe we do hold any personal data and wish to exercise any of the rights set out above, please email <a href="mailto:hello@aplisay.uk?Subject=GDPR+Subject+Access+Request">hello@aplisay.uk</a>
           <Typography variant="body1">
-            Please do not use this contact information for general enquiries about the application, this is purely the legal entity bankrolling running the service and putting it's GDPR neck on the line. 
+            Please do not use this contact information for general and technical enquiries about the application.
           </Typography>
         </Typography>
 
