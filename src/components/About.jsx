@@ -128,9 +128,8 @@ export default function About(props) {
       <Paper className={classes.paper}>
         <Typography variant="h6">Contact &amp; Credits</Typography>
         <Typography variant="body1">
-          The author is <Link href="https://infosec.exchange/@robx0a" target="_blank" rel="noopener">@robx0a@infosec.exchange</Link>. Appreciation by way of a contribution to hosting costs very much accepted:
+          The author is <Link href="https://infosec.exchange/@robx0a" target="_blank" rel="noopener">@robx0a@infosec.exchange</Link>.
         </Typography>
-        <Kofi id="robpickering" text="Donate" />
         <Typography>Source code: <GitHubIcon /><Link href="https://github.com/rjp44/open-follow/" target="_blank" rel="noopener">rjp44/open-follow</Link></Typography>
         <Typography>
           I know it is rough. It really needs a good tidy up and some major areas re-factored from what I learned about the APIs but I need sleep and getting it out seems urgent.

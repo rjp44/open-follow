@@ -63,7 +63,7 @@ function App() {
                   <TwitterBadge />
                   {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon />}
                   <MastodonBadge />
-                  <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} disabled={!state.haveSavedData} />
+                  <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} disabled={true} />
                    <DataDownload data={state.lists} />
                 </Toolbar>
               </AppBar>
