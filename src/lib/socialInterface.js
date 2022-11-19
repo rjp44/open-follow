@@ -140,13 +140,15 @@ export default class SocialInterface {
     await SocialInterface.mastodonLoginDone;
     
     this.setState((draft) => {
-      draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 100 }, text: 'getting mastodon following' };
+      draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 10000 }, text: 'Getting mastodon following' };
     });
     for await (const slice of SocialInterface.mastodon.getList('following')) {
       
       this.setState((draft) => {
         draft.mastodon.following.push(...slice);
-        draft.status.task.current++;
+        draft.status.task.current += slice.length;
+        draft.status.text = `Getting mastodon following ${draft.status.task.current}/?`;
+
       });
     }
     while (!await this.xrefLists(Object.entries(SocialInterface.state.globalState.lists).reduce((c, [, list]) => (c + list?.entries?.length), 0))) {
