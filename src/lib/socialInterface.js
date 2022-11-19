@@ -339,6 +339,7 @@ export default class SocialInterface {
     }
     SocialInterface.setState((draft) => {
       draft.saving = 0;
+      draft.haveSavedData = true;
     });
   }
 
