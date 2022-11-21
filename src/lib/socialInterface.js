@@ -106,6 +106,11 @@ export default class SocialInterface {
     this.setState((draft) => {
       draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists) }, text: 'Waiting for twitter login' };
     });
+    await SocialInterface.twitterLoginDone;
+    this.setState((draft) => {
+      draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists) }, text: 'Waiting for mastodon login' };
+    });
+    await SocialInterface.mastodonLoginDone;
     while (Object.entries(SocialInterface.state.globalState.lists).reduce((ag, [, entry]) => (ag || entry.loaded !== 'done'), false)) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       await SocialInterface.twitterLoginDone;
@@ -139,7 +144,7 @@ export default class SocialInterface {
     this.setState((draft) => {
       draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 0}, text: 'Waiting for mastodon login' };
     });
-    await SocialInterface.mastodonLoginDone;
+
     
     this.setState((draft) => {
       draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 10000 }, text: 'Getting mastodon following' };
@@ -183,10 +188,18 @@ export default class SocialInterface {
       else if (newState === 'showtime' && oldState !== newState) {
         let userInfo = await SocialInterface.mastodon.getUserInfo();
 
+        let servers;
+        if (!this.mastodon.servers) {
+          this.mastodon.servers = servers = await SocialInterface.mastodon.getServers();
+        }
+        let host = this.mastodon.host;
+
         this.setState((draft) => {
           draft.mastodon.state = newState;
           draft.mastodon.userInfo = userInfo;
+          draft.mastodon.host = host;
           draft.mastodon.following = [];
+          servers && (draft.mastodon.servers = servers);
           draft.uiState = (SocialInterface.state.globalState.twitter.state !== 'showtime') ? 'twitterLogin' : 'main';
         });
         SocialInterface.mastodonLoginResolve(true);
@@ -331,7 +344,7 @@ export default class SocialInterface {
       for (let matchIndex in list.entries[contactIndex].matches) {
         let match = list.entries[contactIndex].matches[matchIndex];
         if (match.selected) {
-          let result = await SocialInterface.mastodon.add(target[listName], match.id);
+          await SocialInterface.mastodon.add(target[listName], match.id);
           this.select({ listName, contact: list.entries[contactIndex].username, acct: match.acct, alreadyFollowing: true }, false);
           SocialInterface.setState((draft) => {
             draft.saving--;
@@ -365,6 +378,13 @@ export default class SocialInterface {
       });
 
     }
+  }
+
+  callback(service, { code, state }) {
+    let res = false;
+    service === 'twitter' && code && state && (res = this.twitter.callback({ code, state }));
+    service === 'mastodon' && code && (res = this.mastodon.callback({ code }));
+    return res;
   }
 
   setMastodonState(state) {

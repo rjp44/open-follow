@@ -8,7 +8,7 @@ import OpenFollow from './OpenFollow';
 import About from './About';
 
 export let paths = {
-  '/': { title: 'openFollow', exact: true, element: <OpenFollow />},
+  '/': { title: 'openFollow', element: <OpenFollow />},
   '/about': { title: 'About', element: <About /> }
 }
 

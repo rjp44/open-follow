@@ -1,4 +1,5 @@
 import './App.css';
+import { useMemo } from 'react';
 import { useImmer } from "use-immer";
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
@@ -10,9 +11,12 @@ import EastIcon from '@mui/icons-material/East';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 import {
-  HashRouter as Router,
+  BrowserRouter as Router,
   Route,
-  Routes} from "react-router-dom";
+  Routes,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 import SocialInterface, { SocialContext, initialState } from './lib/socialInterface';
 import MastodonBadge from './components/MastodonBadge';
 import TwitterBadge from './components/TwitterBadge';
@@ -42,16 +46,48 @@ function Logout(props) {
   </Button>;
 }
 
+// A custom hook that builds on useLocation to parse
+// the query string for you.
+function useQuery() {
+  const { search } = useLocation();
+
+  return useMemo(() => new URLSearchParams(search), [search]);
+}
+
+
+function CallBack(props) {
+  const navigate = useNavigate();
+  let searchParams = useQuery();
+  const social = new SocialInterface();
+
+
+  useEffect(() => {
+    let { code, state } = Object.fromEntries(searchParams.entries());
+    console.log('rendering callback...', { service: props.service, code, state });
+    if (code || state) {
+      social.callback(props.service, { code, state })
+      .then(() => navigate('/'));
+
+    }
+  }, []);
+
+  return <></>;
+
+}
+
+
 function App() {
   const classes = useStyles();
   const [state, setState] = useImmer(initialState);
+
   const social = new SocialInterface(state, setState);
   useEffect(() => {
     social.mainWaitLoop();
-  }, [])
+  }, []);
 
   return (
     <SocialContext.Provider value={state}>
+      {console.log({ app: { state }})}
       <ThemeProvider theme={theme}>
         <Router>
           <>
@@ -59,12 +95,12 @@ function App() {
               <AppBar position="fixed">
                 <Toolbar>
                   <MainMenu />
-                  <Logout logout={social.logout} twitterState={ state.twitter.state === 'showtime' } mastodonState={ state.mastodon.state === 'showtime' } />
+                  <Logout logout={social.logout} twitterState={state.twitter.state === 'showtime'} mastodonState={state.mastodon.state === 'showtime'} />
                   <TwitterBadge />
                   {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon />}
                   <MastodonBadge />
                   <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} disabled={true} />
-                   <DataDownload data={state.lists} />
+                  <DataDownload data={state.lists} />
                 </Toolbar>
               </AppBar>
               <div className={classes.toolbar} />
@@ -79,6 +115,16 @@ function App() {
                     children={value.children}
                   />
                 )}
+                <Route exact={false}
+                  path='/callback/twitter'
+                  key='callback'
+                  element={<CallBack service="twitter" />}
+                />
+                                  <Route exact={false}
+                  path='/callback/mastodon'
+                  key='callback'
+                  element={<CallBack service="mastodon" />}
+                />
               </Routes>
             </Box>
           </>

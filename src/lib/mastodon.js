@@ -37,6 +37,11 @@ export default class Mastodon extends Social {
 
   }
 
+  async callback(args) {
+    super.callback('mastodon', args);
+  }
+
+
 
       
   

@@ -37,7 +37,7 @@ export default function TwitterLogin(props) {
         <LoadingButton
           startIcon={<TwitterIcon />}
           endIcon={<LoginIcon />}
-          variant="contained" href={state.twitter.url} target="_blank"
+          variant="contained" href={state.twitter.url}
           onClick={() => social.twitterAuthenticate()}
           loading={state.twitter.state === 'authenticating'}
           disabled={state.twitter.state === 'showtime' || !(state.twitter?.url?.length > 0)}
