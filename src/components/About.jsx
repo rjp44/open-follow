@@ -11,7 +11,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import Slide from '@mui/material/Slide';
 import Link from '@mui/material/Link';
-import Kofi from './Kofi';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -128,7 +127,7 @@ export default function About(props) {
       <Paper className={classes.paper}>
         <Typography variant="h6">Contact &amp; Credits</Typography>
         <Typography variant="body1">
-          The author is <Link href="https://infosec.exchange/@robx0a" target="_blank" rel="noopener">@robx0a@infosec.exchange</Link>.
+          The author is <Link href="https://infosec.exchange/@robx0a" target="_blank" rel="me noopener">@robx0a@infosec.exchange</Link>.
         </Typography>
         <Typography>Source code: <GitHubIcon /><Link href="https://github.com/rjp44/open-follow/" target="_blank" rel="noopener">rjp44/open-follow</Link></Typography>
         <Typography>
