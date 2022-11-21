@@ -19,6 +19,10 @@ export default class Twitter extends Social {
     });
   }
 
+  callback(args){
+    return super.callback('twitter', args);
+  }
+
 
   /**
    * Generator which yields list fragments. Streams data from API and yields each complete list fragment

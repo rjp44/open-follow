@@ -1,3 +1,4 @@
+
 /**
  * 
  * Superclass for social media providers
@@ -10,6 +11,12 @@ export default class Social {
   constructor({ onStateChange } = {}) {
     
     this.onStateChange = async (state, lastState) => (onStateChange && onStateChange(state, lastState));
+  }
+
+  async callback(path, args) {
+    let query = new URLSearchParams(args)
+    let res = await this.api.get(`/callback?${query.toString()}`);
+    res.status === 200 && (this.state = 'showtime');
   }
 
   async start() {
@@ -25,7 +32,7 @@ export default class Social {
       time: new Date(),
       last,
     };
-    console.log('state change', this.onStateChange, this._state.state, last.state)
+    console.log(`state change ${this.constructor.name}: ${last.state} => ${this._state.state}`)
     this.onStateChange && this.onStateChange(this._state.state, last.state);
   }
   get state() {
@@ -48,15 +55,7 @@ export default class Social {
   async startLogin() {
     this.checkstate("initial");
     this.state = "authenticating";
-    try {
-      let { data } = await this.api.get("/checkLogin");
-      this.state = "showtime";
-      
-      return this.state;
-    } catch (err) {
-      this.state = "initial";
-      return this.state;
-    }
+
   }
 
   /**
@@ -93,6 +92,7 @@ export default class Social {
   async checkStatus() {
     let { data } = await this.api.get(`/checkStatus`);
     
+    this.host = data.host;
     this.state = data.state || 'initial';
     return data.state;
   }

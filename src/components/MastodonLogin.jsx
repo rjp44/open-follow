@@ -53,7 +53,7 @@ export default function MastodonLogin(props) {
         <DialogContentText sx={{mb: 2}}>Please ensure you allow popups for this site and your mastodon host to enable the login.</DialogContentText>
       </DialogContent>
       <DialogActions>
-        <LoadingButton variant="contained" href={state.mastodon.url} target="_blank"
+        <LoadingButton variant="contained" href={state.mastodon.url}
           onClick={() => social.mastodonAuthenticate()}
           loading={state.mastodon.state === 'authenticating'}
           disabled={state.mastodon.state === 'showtime' || !(state?.mastodon?.url?.length > 0)}

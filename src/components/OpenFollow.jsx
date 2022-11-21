@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useLayoutEffect, useRef } from 'react';
+
 import Box from '@mui/material/Box';
 
 
@@ -29,7 +30,6 @@ export default function OpenFollow(props) {
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
 
-
   function getWindowDimensions() {
     const { innerHeight: height } = window;
     return {
@@ -57,8 +57,8 @@ export default function OpenFollow(props) {
 
   return (
     <Box sx={{ maxHeight: 500 }}>
-      <TwitterLogin open={state.twitter.state !== 'showtime'} />
-      <MastodonLogin open={state.twitter.state === 'showtime' && state.mastodon.state !== 'showtime'} />
+      <TwitterLogin open={state.twitter.state !== 'showtime' && state.twitter.state !== ''} />
+      <MastodonLogin open={state.twitter.state === 'showtime'&& state.mastodon.state !== '' && state.mastodon.state !== 'showtime'} />
       {mainUi && (<>
         <TabContext value={tab} aria-label="List tab">
           <TabList onChange={(e, value) => setTab(value)} ref={tabHeaderRef} >
