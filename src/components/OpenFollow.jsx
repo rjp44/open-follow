@@ -63,11 +63,11 @@ export default function OpenFollow(props) {
         <TabContext value={tab} aria-label="List tab">
           <TabList onChange={(e, value) => setTab(value)} ref={tabHeaderRef} >
             {Object.entries(state.lists).map(([listName, list]) =>
-              <Tab key={listName}  label={listName} value={listName} />
+              <Tab key={listName} label={listName} value={listName}/>
             )}
           </TabList>
           {Object.entries(state.lists).map(([listName, list]) =>
-            <TabPanel value={listName} >
+            <TabPanel value={listName} key={listName} >
               <ListView listHeight={`${windowDimensions.height - 130 - tabHeight}px`} list={list} key={listName} status={state.status} saving={state.saving} name={listName} saveList={social.saveList} selectAll={(state) => social.select({ listName }, state)} select={social.select} />
             </TabPanel>
           )}

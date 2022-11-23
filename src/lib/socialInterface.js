@@ -246,12 +246,12 @@ export default class SocialInterface {
         }
         let profileMatches = SocialInterface.findFedi(`${entry.name} ${entry.description}`).filter(p =>
           (SocialInterface.state.globalState.mastodon.servers.find(s => (s.toLowerCase() === p.host))));
-        let searchString = profileMatches.length ? `@${profileMatches[0].user}@${profileMatches[0].host}` : `@${entry.username}@`;
+        let searchString = profileMatches.length ? `@${profileMatches[0].user}@${profileMatches[0].host}` : `@${entry.username}`;
         let certainty = profileMatches.length ? { desc: 'found via link in twitter bio', tier: 1 } : { desc: 'match for twitter handle', tier: 3 };
         
         let matches;
         try {
-          matches = await this.mastodon.search(searchString, 'accounts');
+          matches = await this.mastodon.searchAccount(searchString);
         }
         catch (err) {
           return false;

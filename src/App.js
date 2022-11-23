@@ -87,7 +87,6 @@ function App() {
 
   return (
     <SocialContext.Provider value={state}>
-      {console.log({ app: { state }})}
       <ThemeProvider theme={theme}>
         <Router>
           <>

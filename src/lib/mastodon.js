@@ -99,6 +99,11 @@ export default class Mastodon extends Social {
     }
   }
 
+  async searchAccount(account) {
+    let { data } = await this.api.get(`/account/search?account=${encodeURIComponent(account)}`);
+    return data;
+  }
+
   async *getList(list, id) {
     if (!id)
       id =  this?.userInfo?.id
