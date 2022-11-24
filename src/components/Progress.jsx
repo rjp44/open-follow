@@ -1,8 +1,8 @@
 import LinearProgress from '@mui/material/LinearProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
-/*
 function Spinner(props) {
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
@@ -20,22 +20,23 @@ function Spinner(props) {
         }}
       >
         <Typography variant="caption" component="div" color="text.secondary">
-          {`${props.a}`}
+          {`${props.a}%`}
         </Typography>
       </Box>
     </Box>
   );
 }
-*/
+
 
 
 export default function Progress(props) {
   let percent = {};
   
   ['global', 'task'].forEach(tier => (percent[tier] = Math.round(props?.status?.[tier]?.current / props?.status?.[tier]?.steps * 100)));
-  return <Box sx={{flexGrow: 1}}>
-    <div><Typography variant="subheading">{props.status.text}</Typography></div>
-    <div>{!isNaN(percent.global) && !isNaN(percent.task) && <LinearProgress variant="buffer" value={percent.global} valueBuffer={percent.task} />}</div>
+  return <Box>
+    <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' } }} ><Typography variant="subheading">{props.status.text}</Typography></Box>
+    <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' } }}>{!isNaN(percent.global) && !isNaN(percent.task) && <LinearProgress variant="buffer" value={percent.global} valueBuffer={percent.task} />}</Box>
+    <Box sx={{ display: { xs: 'block', sm: 'block', md: 'none' } }}>{!isNaN(percent.global) && <Spinner a={percent.global} b={100}/>}</Box>
   </Box>
 
 }

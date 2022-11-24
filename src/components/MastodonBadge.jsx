@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { makeStyles } from '@mui/styles';
-import { Avatar } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
 import { SocialContext } from '../lib/socialInterface';
 
 
@@ -58,7 +59,7 @@ export default function MastodonBadge(props) {
   const user = state.mastodon.userInfo;
 
   return (
-    <>
+    <Box {...props}>
       {user && <div className={classes.accountHeader}>
         <div className={classes.avatar}><Avatar src={user.avatar} className={classes.avatar} /></div>
         <div className={classes.name}>
@@ -68,7 +69,7 @@ export default function MastodonBadge(props) {
 
       </div>
       }
-    </>
+    </Box>
   );
 
 }

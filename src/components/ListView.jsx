@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Avatar } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
+import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import List from '@mui/material/List';
@@ -104,9 +105,12 @@ export default function ListView(props) {
         subheader={<li />}>
         <ListSubheader key="subheader">
           <Toolbar>
+            <Box sx={{ display: 'flex', flexGrow: 1 }}>
             <Progress status={status} />
-            <LoadingButton onClick={() => props.saveList(name)} loading={saving > 0} loadingIndicator={`Saving ${props.saving}`} disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</LoadingButton>
+              <LoadingButton onClick={() => props.saveList(name)} loading={saving > 0} loadingIndicator={`Saving ${props.saving}`} disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 5, mr: 5 }}>
+                {name === 'following' || name === 'followers' ? 'follow' : name.replace(/ed$/i, '')} Selected</LoadingButton>
             <SelectAllControl {...props} />
+            </Box>
           </Toolbar>
 
         </ListSubheader>
@@ -120,7 +124,7 @@ export default function ListView(props) {
             </ListItem>
 
             {contact?.matches?.length && (
-              <List component="div" disablePadding>
+              <List component="div" disablePadding key={`${contact.username}-child`}>
                 {contact.matches.map(m => (
                   <ListItem sx={{ pl: 10 }} key={`${contact.username}-${m.acct}`}
                     secondaryAction={

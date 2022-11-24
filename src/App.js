@@ -95,9 +95,9 @@ function App() {
                 <Toolbar>
                   <MainMenu />
                   <Logout logout={social.logout} twitterState={state.twitter.state === 'showtime'} mastodonState={state.mastodon.state === 'showtime'} />
-                  <TwitterBadge />
-                  {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon />}
-                  <MastodonBadge />
+                  <TwitterBadge sx={{ display: { xs: 'none', sm: 'none', md: 'inline' } }} />
+                  {state.twitter.state === 'showtime' && state.mastodon.state === 'showtime' && <EastIcon sx={{ display: { xs: 'none', sm: 'none', md: 'inline' } }} />}
+                  <MastodonBadge sx={{ display: { xs: 'none', sm: 'none', md: 'inline' } }} />
                   <Kofi id="robpickering" text="Donate" sx={{ flexGrow: 1 }} disabled={true} />
                   <DataDownload data={state.lists} />
                 </Toolbar>

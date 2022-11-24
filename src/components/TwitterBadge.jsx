@@ -1,7 +1,8 @@
 import { useContext } from 'react';
 import { makeStyles } from '@mui/styles';
 
-import { Avatar } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
 import { SocialContext } from '../lib/socialInterface';
 
 
@@ -58,7 +59,7 @@ export default function TwitterBadge(props) {
   const user = state?.twitter?.userInfo;
 
   return (
-    <>
+    <Box {...props}>
       {user && <div className={classes.accountHeader}>
         <div className={classes.avatar}><Avatar src={user.profile_image_url} className={classes.avatar} /></div>
         <div className={classes.name}>
@@ -67,7 +68,7 @@ export default function TwitterBadge(props) {
         </div>
       </div>
       }
-    </>
+    </Box>
   );
 
 }
