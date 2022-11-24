@@ -114,7 +114,7 @@ export default function ListView(props) {
           </Toolbar>
 
         </ListSubheader>
-        {list.entries.filter(c => c.matches).map(contact => (
+        {list.entries.filter(c => c.matches && c.matches.length && c.matches.filter(m => !m.alreadyFollowing).length > 0).map(contact => (
           <>
             <ListItem sx={{ bgcolor: '#eeeeee' }} id={contact.username} key={contact.username}>
               <ListItemAvatar ><Avatar src={contact.profile_image_url} /></ListItemAvatar>
