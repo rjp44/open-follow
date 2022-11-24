@@ -28,9 +28,8 @@ export default function MastodonLogin(props) {
       <DialogContent>
         <DialogContentText sx={{mb: 2}}>
           Please authorise this application to retrieve your own user account info, search for Mastodon users, and add following, blocked and muted relationships.
-          When you press the button below, a new window or tab will open with a Mastodon authorisation screen from your home server.
         </DialogContentText>
-        <DialogContentText sx={{ mb: 2 }}>You will first need to enter your Mastodon host that you can be taken to a login screen on your home server.</DialogContentText>
+        <DialogContentText sx={{ mb: 2 }}>First, enter your Mastodon host that you can be taken to a login screen on your home server.</DialogContentText>
         <Autocomplete
           id="host"
           options={state.mastodon.servers || []}

@@ -30,7 +30,6 @@ export default function TwitterLogin(props) {
       <DialogContent>
         <DialogContentText>
           Please authorise this application to retrieve data about your follows, followers, block and mute lists from Twitter.
-          When you press the button below, a new window or tab will open with a twitter authorisation screen. Please ensure you allow popups for this site and twitter to enable the login.
         </DialogContentText>
       </DialogContent>
       <DialogActions>
