@@ -277,7 +277,8 @@ export default class SocialInterface {
         
         accounts?.length && accounts.forEach(account => {
           !account.acct.includes('@') && (account.acct = `${account.acct}@${SocialInterface.state.globalState.mastodon.host}`);
-          if (SocialInterface.state.globalState.mastodon.following.find(f => f.id === account.id)) {
+          let acct = account.acct.toLowerCase();
+          if (SocialInterface.state.globalState.mastodon.following.find(f => f.acct && f.acct.toLowerCase() === acct)) {
             account.alreadyFollowing = true;
           }
           account.certainty = { ...certainty };
