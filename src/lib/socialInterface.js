@@ -104,11 +104,11 @@ export default class SocialInterface {
     new Promise((resolve) => SocialInterface.mastodonLogin = resolve);
     
     this.setState((draft) => {
-      draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists) }, text: 'Waiting for twitter login' };
+      draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists).length }, text: 'Waiting for twitter login' };
     });
     await SocialInterface.twitterLoginDone;
     this.setState((draft) => {
-      draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists) }, text: 'Waiting for mastodon login' };
+      draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists).length }, text: 'Waiting for mastodon login' };
     });
     await SocialInterface.mastodonLoginDone;
     while (Object.entries(SocialInterface.state.globalState.lists).reduce((ag, [, entry]) => (ag || entry.loaded !== 'done'), false)) {
@@ -121,14 +121,18 @@ export default class SocialInterface {
           continue;
         }
         try {
+          let fetched = 0;
           this.setState((draft) => {
             draft.lists[name] = { loaded: 'loading', entries: [] };
             draft.status.task.current++; 
-            draft.status.text = `fetching ${name} list`;
+            draft.status.text = `fetching ${name} list ${fetched}/?`;
           });
           for await (const slice of this.twitter.getList(name)) {
-            
-            this.setState((draft) => { draft.lists[name].entries.push(...slice); });
+            fetched += slice.length;
+            this.setState((draft) => {
+              draft.lists[name].entries.push(...slice);
+              draft.status.text = `fetching ${name} list ${fetched}/?`;
+            });
           }
           this.setState((draft) => { draft.lists[name].loaded = 'done'; });
         }
@@ -333,7 +337,7 @@ export default class SocialInterface {
     const target = {
       followers: 'follow',
       following: 'follow',
-      bloked: 'block',
+      blocked: 'block',
       muted: 'mute'
     };
     let list = SocialInterface.state.globalState.lists[listName];
