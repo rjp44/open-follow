@@ -105,7 +105,7 @@ export default function ListView(props) {
         <ListSubheader key="subheader">
           <Toolbar>
             <Progress status={status} />
-            <LoadingButton onClick={() => props.saveList(name)} loading={saving <= 0} loadingIndicator={`Saving ${props.saving}`} disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</LoadingButton>
+            <LoadingButton onClick={() => props.saveList(name)} loading={saving > 0} loadingIndicator={`Saving ${props.saving}`} disabled={selectedCount === 0} variant="contained" sx={{ flexGrow: 1, ml: 10, mr: 10 }}>Save Selected to Mastodon</LoadingButton>
             <SelectAllControl {...props} />
           </Toolbar>
 
