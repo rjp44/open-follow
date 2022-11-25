@@ -119,7 +119,9 @@ export default function ListView(props) {
             <ListItem sx={{ bgcolor: '#eeeeee' }} id={contact.username} key={contact.username}>
               <ListItemAvatar ><Avatar src={contact.profile_image_url} /></ListItemAvatar>
               <ListItemText secondary={`@${contact.username}`} >
-                <Typography variant="subtitle1">{contact.name}</Typography>{contact.description}
+                <Typography variant="subtitle1">{contact.name}</Typography>
+                <Box sx={{ display: { xs: "none", sm: "inline", md: "none" } }}>{excerptHtml(contact.description, { pruneLength: 40 })}</Box>
+                <Box sx={{ display: { xs: "none", sm: "none", md: "inline" } }}>{excerptHtml(contact.description, { pruneLength: 160 })}</Box>
               </ListItemText>
             </ListItem>
 
@@ -139,7 +141,8 @@ export default function ListView(props) {
                     <ListItemAvatar><Avatar src={m.avatar} /></ListItemAvatar>
                     <ListItemText id={m.acct}>
                       <Typography variant="subtitle1">{m.display_name}  {m.locked && <LockIcon />} {m.alreadyFollowing && <Chip size="small" label="currently following" />}</Typography>
-                      {excerptHtml(m.note)}
+                      <Box sx={{ display: { xs: "none", sm: "inline", md: "none" } }}>{excerptHtml(m.note, { pruneLength: 40 })}</Box>
+                      <Box sx={{ display: { xs: "none", sm: "none", md:"inline" } }}>{excerptHtml(m.note, { pruneLength: 160 })}</Box>
                       <HandleWithCertainty handle={m.acct} certainty={m.certainty} />
                     </ListItemText>
                   </ListItem>
