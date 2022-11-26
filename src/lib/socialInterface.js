@@ -248,7 +248,7 @@ export default class SocialInterface {
         if (index < skip) {
           continue;
         }
-        let profileMatches = SocialInterface.findFedi(`${entry.name} ${entry.description}`).filter(p =>
+        let profileMatches = SocialInterface.findFedi(`${entry.name} ${entry.description} ${entry.entities}`).filter(p =>
           (SocialInterface.state.globalState.mastodon.servers.find(s => (s.toLowerCase() === p.host))));
         let searchString = profileMatches.length ? `@${profileMatches[0].user}@${profileMatches[0].host}` : `@${entry.username}`;
         let certainty = profileMatches.length ? { desc: 'found via link in twitter bio', tier: 1 } : { desc: 'match for twitter handle', tier: 3 };
