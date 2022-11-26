@@ -154,7 +154,7 @@ export default class SocialInterface {
       draft.status = { global: { current: 1, steps: 3 }, task: { current: 0, steps: 10000 }, text: 'Getting mastodon following' };
     });
     for await (const slice of SocialInterface.mastodon.getList('following')) {
-      
+      slice.forEach(m => m.acct && !m.acct.includes('@') && (m.acct = `${m.acct}@${SocialInterface.mastodon.host}`))
       this.setState((draft) => {
         draft.mastodon.following.push(...slice);
         draft.status.task.current += slice.length;

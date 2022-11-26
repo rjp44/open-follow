@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Avatar } from '@mui/material';
+import { Avatar, IconButton } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
@@ -91,12 +91,13 @@ function HandleWithCertainty(props) {
 
 export default function ListView(props) {
 
-  const { list, name, status, saving } = props;
+  const { list, name, status, saving, twitter, mastodon} = props;
 
   let count = list && list?.entries?.length;
   let matchCount = list.entries.filter(c => c.matches).reduce((o, contact) => (o + contact?.matches?.length), 0);
   let selectedCount = list.entries.filter(c => c.matches).reduce((o, contact) => (o + contact?.matches?.filter(m => m.selected)?.length), 0);
-
+  let mastodonLink = (acct) => `https://${mastodon.host}/@${acct}`;
+  let twitterLink = (handle) => `https://twitter.com/${handle}`;
   
 
   return (<>
@@ -138,7 +139,7 @@ export default function ListView(props) {
                       />
                     }
                   >
-                    <ListItemAvatar><Avatar src={m.avatar} /></ListItemAvatar>
+                    <ListItemAvatar><IconButton  href={mastodonLink(m.acct)} target="_blank" rel="noreferrer"><Avatar src={m.avatar}/></IconButton></ListItemAvatar>
                     <ListItemText id={m.acct}>
                       <Typography variant="subtitle1">{m.display_name}  {m.locked && <LockIcon />} {m.alreadyFollowing && <Chip size="small" label="currently following" />}</Typography>
                       <Box sx={{ display: { xs: "none", sm: "inline", md: "none" } }}>{excerptHtml(m.note, { pruneLength: 40 })}</Box>

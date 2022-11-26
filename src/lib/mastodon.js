@@ -136,8 +136,9 @@ export default class Mastodon extends Social {
   async add(list, id) {
     this.checkstate('showtime');
     let url = `/api/v1/accounts/${encodeURIComponent(id)}/${list}`;
+    let body = { reblogs: true };
     try {
-      let res = await this.mastodon.post(url);
+      let res = await this.mastodon.post(url, body);
       let { data } = res;
       return data;
     }

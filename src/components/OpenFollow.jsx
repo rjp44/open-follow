@@ -68,7 +68,7 @@ export default function OpenFollow(props) {
           </TabList>
           {Object.entries(state.lists).map(([listName, list]) =>
             <TabPanel value={listName} key={listName} >
-              <ListView listHeight={`${windowDimensions.height - 130 - tabHeight}px`} list={list} key={listName} status={state.status} saving={state.saving} name={listName} saveList={social.saveList} selectAll={(state) => social.select({ listName }, state)} select={social.select} />
+              <ListView listHeight={`${windowDimensions.height - 130 - tabHeight}px`} list={list} key={listName} status={state.status} saving={state.saving} name={listName} mastodon={state.mastodon} twitter={state.twitter} saveList={social.saveList} selectAll={(state) => social.select({ listName }, state)} select={social.select} />
             </TabPanel>
           )}
         </TabContext>
