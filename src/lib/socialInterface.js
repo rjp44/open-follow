@@ -349,7 +349,7 @@ export default class SocialInterface {
       for (let matchIndex in list.entries[contactIndex].matches) {
         let match = list.entries[contactIndex].matches[matchIndex];
         if (match.selected) {
-          await SocialInterface.mastodon.add(target[listName], match.id);
+          await SocialInterface.mastodon.add(target[listName], match.acct);
           this.select({ listName, contact: list.entries[contactIndex].username, acct: match.acct, alreadyFollowing: true }, false);
           SocialInterface.setState((draft) => {
             draft.saving--;
