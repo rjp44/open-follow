@@ -104,6 +104,7 @@ export default class SocialInterface {
     new Promise((resolve) => SocialInterface.mastodonLogin = resolve);
     
     this.setState((draft) => {
+      draft.mastodon.host = this.mastodon.host;
       draft.status = { global: { current: 0, steps: 3 }, task: { current: 0, steps: Object.entries(SocialInterface.state.globalState.lists).length }, text: 'Waiting for twitter login' };
     });
     await SocialInterface.twitterLoginDone;
@@ -385,10 +386,13 @@ export default class SocialInterface {
     }
   }
 
-  callback(service, { code, state }) {
+  async callback(service, { code, state, error, error_description }) {
     let res = false;
-    service === 'twitter' && code && state && (res = this.twitter.callback({ code, state }));
-    service === 'mastodon' && code && (res = this.mastodon.callback({ code }));
+    service === 'twitter' && code && state && !error && (res = await this.twitter.callback({ code, state }));
+    service === 'mastodon' && code && !error && (res = await this.mastodon.callback({ code }));
+    if (error || res === false) {
+      throw new Error(error || error_description);
+    }
     return res;
   }
 

@@ -1,12 +1,12 @@
 import './App.css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useImmer } from "use-immer";
 
 import MainMenu, { paths as MenuPaths } from './components/MainMenu';
 
 import { makeStyles } from '@mui/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Button, Toolbar, Box } from '@mui/material';
+import { AppBar, Button, Toolbar, Box, Snackbar, Alert } from '@mui/material';
 import EastIcon from '@mui/icons-material/East';
 import LogoutIcon from '@mui/icons-material/Logout';
 
@@ -59,19 +59,31 @@ function CallBack(props) {
   const navigate = useNavigate();
   let searchParams = useQuery();
   const social = new SocialInterface();
+  let [error, setError] = useState(null);
 
 
   useEffect(() => {
-    let { code, state } = Object.fromEntries(searchParams.entries());
-    console.log('rendering callback...', { service: props.service, code, state });
-    if (code || state) {
-      social.callback(props.service, { code, state })
-      .then(() => navigate('/'));
+    let { code, state, error, error_description } = Object.fromEntries(searchParams.entries());
+    if (code || state || error) {
+      social.callback(props.service, { code, state, error, error_description })
+        .then(() => navigate('/'))
+        .catch((err) => {
+          setError(err.message);
+        })
+      
 
     }
   }, []);
+  const dialogClose = () => navigate('/');
 
-  return <></>;
+  return <>
+    <Snackbar open={error != null} autoHideDuration={6000} onClose={dialogClose}>
+      <Alert onClose={dialogClose} severity="error" sx={{ width: '100%' }}>
+        Login failed, {error}
+        Please Try Again
+      </Alert>
+    </Snackbar>
+  </>;
 
 }
 
@@ -116,12 +128,12 @@ function App() {
                 )}
                 <Route exact={false}
                   path='/callback/twitter'
-                  key='callback'
+                  key='callback-twitter'
                   element={<CallBack service="twitter" />}
                 />
                                   <Route exact={false}
                   path='/callback/mastodon'
-                  key='callback'
+                  key='callback-mastodon'
                   element={<CallBack service="mastodon" />}
                 />
               </Routes>

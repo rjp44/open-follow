@@ -17,6 +17,7 @@ export default class Social {
     let query = new URLSearchParams(args)
     let res = await this.api.get(`/callback?${query.toString()}`);
     res.status === 200 && (this.state = 'showtime');
+    return res.data;
   }
 
   async start() {
