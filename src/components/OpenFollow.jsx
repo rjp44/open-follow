@@ -16,7 +16,7 @@ import ListView from './ListView';
 
 import MastodonLogin from './MastodonLogin';
 import TwitterLogin from './TwitterLogin';
-
+import DialogShuttered from './DialogShuttered';
 
 
 
@@ -57,8 +57,9 @@ export default function OpenFollow(props) {
 
   return (
     <Box sx={{ maxHeight: 500 }}>
-      <TwitterLogin open={state.twitter.state !== 'showtime' && state.twitter.state !== ''} />
-      <MastodonLogin open={state.twitter.state === 'showtime'&& state.mastodon.state !== '' && state.mastodon.state !== 'showtime'} />
+      <DialogShuttered open={true} />
+      <TwitterLogin open={false && state.twitter.state !== 'showtime' && state.twitter.state !== ''} />
+      <MastodonLogin open={false && state.twitter.state === 'showtime'&& state.mastodon.state !== '' && state.mastodon.state !== 'showtime'} />
       {mainUi && (<>
         <TabContext value={tab} aria-label="List tab">
           <TabList onChange={(e, value) => setTab(value)} ref={tabHeaderRef} >
